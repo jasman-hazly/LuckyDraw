@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unbiased Lucky Draw - Multi-Step with Confetti</title>
+    <title>Unbiased Lucky Draw - Pop-up Winner</title>
     <!-- Load Tailwind CSS for styling --><script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,8 +14,9 @@
                     },
                     keyframes: {
                         pop: {
-                            '0%, 100%': { transform: 'scale(1)' },
-                            '50%': { transform: 'scale(1.05)' },
+                            '0%': { transform: 'scale(0.9)', opacity: 0 },
+                            '70%': { transform: 'scale(1.05)', opacity: 1 },
+                            '100%': { transform: 'scale(1)', opacity: 1 },
                         },
                         fadeIn: {
                             '0%': { opacity: 0, transform: 'translateY(10px)' },
@@ -31,7 +32,7 @@
                          }
                     },
                     animation: {
-                        pop: 'pop 0.3s ease-out',
+                        pop: 'pop 0.4s ease-out forwards', // Apply pop to modal
                         fadeIn: 'fadeIn 0.4s ease-out forwards',
                         fadeInSlow: 'fadeInSlow 0.6s ease-out forwards',
                         spin: 'spin 1.5s linear infinite',
@@ -63,7 +64,7 @@
             display: inline-block;
             width: 3rem;
             height: 3rem;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
@@ -72,6 +73,11 @@
         .hidden {
             display: none;
         }
+         /* Canvas and Modal z-index */
+        #confetti-canvas { z-index: 1050; /* Above everything but modal */}
+        #winner-modal-overlay { z-index: 1100; /* Highest */ }
+        #alert-modal { z-index: 1100; /* Highest */ } /* Ensure error modal is also on top */
+
     </style>
     <!-- Confetti.js library --><script src="https://cdn.jsdelivr.net/npm/confetti-js@0.0.18/dist/index.min.js"></script>
 </head>
@@ -105,7 +111,7 @@
 
         <!-- ===== DRAW SECTION ===== --><div id="drawSection" class="hidden animate-fadeInSlow">
             <div class="md:flex md:gap-x-8 lg:gap-x-12">
-                <!-- Left Panel: Draw Controls and Winner Display --><div class="md:w-2/3">
+                <!-- Left Panel: Draw Controls --><div class="md:w-2/3">
                     <div class="text-center">
                          <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">Draw a Winner</h1>
                          <p class="mt-3 text-lg text-gray-600">
@@ -126,15 +132,10 @@
                         </button>
                     </div>
 
-                    <!-- Winner Display Area --><div id="winnerSection" class="mt-8 text-center" style="display: none;">
-                        <h2 class="text-xl font-medium text-gray-500">The Winner Is...</h2>
-                        <div id="winnerDisplayContainer"
-                             class="mt-3 w-full min-h-[80px] flex items-center justify-center p-6 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
-                            <span id="winnerDisplay" class="text-4xl font-bold text-indigo-700 break-all"></span>
-                            <div id="processingAnimation" class="flex flex-col items-center gap-2" style="display: none;">
-                                <div class="icon-gear text-indigo-500 animate-spin"></div>
-                                <span class="text-xl text-indigo-700 font-semibold">Drawing...</span>
-                            </div>
+                     <!-- Processing Animation Area (now separate) --><div id="processingSection" class="mt-8 text-center hidden">
+                        <div class="flex flex-col items-center justify-center gap-2 p-6 min-h-[80px] bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
+                            <div class="icon-gear text-indigo-500 animate-spin"></div>
+                            <span class="text-xl text-indigo-700 font-semibold">Drawing... Please Wait</span>
                         </div>
                     </div>
 
@@ -161,72 +162,66 @@
 
     <script>
         let participants = [];
-        let confettiInstance; // Declare variable to hold confetti instance
+        let confettiInstance;
 
-        // Get DOM elements
+        // --- DOM Elements ---
         const uploadSection = document.getElementById('uploadSection');
         const drawSection = document.getElementById('drawSection');
         const fileInput = document.getElementById('csvFile');
         const fileNameDisplay = document.getElementById('fileName');
         const drawButton = document.getElementById('drawButton');
         const countDisplay = document.getElementById('count');
-        const winnerSection = document.getElementById('winnerSection');
-        const winnerDisplayContainer = document.getElementById('winnerDisplayContainer');
-        const winnerDisplay = document.getElementById('winnerDisplay');
-        const processingAnimation = document.getElementById('processingAnimation');
+        const processingSection = document.getElementById('processingSection'); // Get processing section
         const pastWinnersContainer = document.getElementById('pastWinnersContainer');
         const winnersList = document.getElementById('winnersList');
         const startOverButton = document.getElementById('startOverButton');
+        let currentWinner = null; // Variable to store the winner temporarily
 
-        // Initialize confetti after the DOM is loaded
+        // --- Confetti Setup ---
         document.addEventListener('DOMContentLoaded', () => {
             const confettiSettings = {
-                target: 'confetti-canvas', // Target an existing canvas element
-                size: 1.5,
-                max: 80, // Number of confetti pieces
-                props: ['circle', 'triangle', 'line'], // Shapes of confetti
-                colors: [[165,239,255],[255,160,207],[170,255,190],[255,230,130],[200,160,255]], // Custom colors
-                clock: 30, // How fast the confetti moves
-                respawn: false, // Don't respawn confetti
-                start_from_pointer: false, // Don't start from mouse pointer
-                height: window.innerHeight,
-                width: window.innerWidth
+                target: 'confetti-canvas',
+                size: 1.5, max: 120, props: ['circle', 'triangle'], // Simpler shapes
+                colors: [[165,104,246],[230,61,135],[0,199,228],[253,214,126]], // Bright colors
+                clock: 30, rotate: true, respawn: false, start_from_pointer: false,
+                spread: 70, // Wider spread
+                drift: 0, // Less drift
+                gravity: 1, // Normal gravity
+                width: window.innerWidth, height: window.innerHeight
             };
-            // Create a canvas element for confetti to target
             const confettiCanvas = document.createElement('canvas');
             confettiCanvas.id = 'confetti-canvas';
             confettiCanvas.style.position = 'fixed';
-            confettiCanvas.style.top = '0';
-            confettiCanvas.style.left = '0';
-            confettiCanvas.style.width = '100%';
-            confettiCanvas.style.height = '100%';
-            confettiCanvas.style.pointerEvents = 'none'; // Allow clicks to pass through
-            confettiCanvas.style.zIndex = '9999'; // Ensure it's on top
+            confettiCanvas.style.top = '0'; confettiCanvas.style.left = '0';
+            confettiCanvas.style.width = '100%'; confettiCanvas.style.height = '100%';
+            confettiCanvas.style.pointerEvents = 'none'; confettiCanvas.style.zIndex = '1050';
             document.body.appendChild(confettiCanvas);
-
             confettiInstance = new ConfettiGenerator(confettiSettings);
         });
 
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', handleFileUpload);
+        drawButton.addEventListener('click', handleDrawClick);
+        startOverButton.addEventListener('click', handleStartOver);
+
+        // --- Functions ---
 
         /**
-         * Event listener for the file input.
+         * Handles the file upload event.
          */
-        fileInput.addEventListener('change', (event) => {
+        function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) {
                 fileNameDisplay.textContent = 'No file selected.';
                 return;
             }
-
             fileNameDisplay.textContent = file.name;
             const reader = new FileReader();
-
             reader.onload = (e) => {
                 const text = e.target.result;
                 participants = text.split('\n')
                                    .map(name => name.trim())
                                    .filter(name => name.length > 0);
-
                 if (participants.length > 0) {
                     uploadSection.classList.add('hidden');
                     drawSection.classList.remove('hidden');
@@ -236,109 +231,151 @@
                     fileNameDisplay.textContent = 'Invalid file.';
                 }
             };
-
-            reader.onerror = () => {
-                showModal('Error', 'An error occurred while reading the file.');
-            };
-
+            reader.onerror = () => showModal('Error', 'An error occurred while reading the file.');
             reader.readAsText(file);
-        });
+        }
 
         /**
-         * Resets only the elements within the draw view.
+         * Resets the draw section view.
          */
         function resetDrawView() {
             updateCount();
             drawButton.disabled = false;
             drawButton.textContent = 'Draw a Winner!';
-            winnerSection.style.display = 'none';
-            winnerDisplay.textContent = '';
-            winnerDisplay.style.display = 'block';
-            processingAnimation.style.display = 'none';
+            processingSection.classList.add('hidden'); // Hide processing animation too
             winnersList.innerHTML = '';
             pastWinnersContainer.style.display = 'none';
+            currentWinner = null;
         }
 
         /**
-         * Event listener for the draw button.
+         * Handles the click event for the draw button.
          */
-        drawButton.addEventListener('click', () => {
+        function handleDrawClick() {
             if (participants.length === 0) {
                 showModal('Draw Complete', 'There are no participants left to draw.');
                 return;
             }
 
-            winnerSection.style.display = 'block';
-            winnerDisplay.style.display = 'none';
-            processingAnimation.style.display = 'flex';
+            // Show processing, disable button
+            processingSection.classList.remove('hidden');
             drawButton.disabled = true;
             drawButton.textContent = 'Drawing...';
 
-            // Stop any existing confetti bursts
-            if (confettiInstance) {
-                confettiInstance.clear();
-            }
+            if (confettiInstance) confettiInstance.clear(); // Clear previous confetti
 
+            // --- Select and Remove Winner ---
+            const winnerIndex = getSecureRandom(participants.length);
+            currentWinner = participants[winnerIndex]; // Store winner temporarily
+            participants.splice(winnerIndex, 1); // Remove winner from pool NOW
+            // -------------------------------
+
+            // Simulate processing time
             setTimeout(() => {
-                const winnerIndex = getSecureRandom(participants.length);
-                const winner = participants[winnerIndex];
-                participants.splice(winnerIndex, 1);
+                processingSection.classList.add('hidden'); // Hide processing
+                showWinnerPopup(currentWinner); // Show the winner pop-up
+                updateCount(); // Update count after removal
 
-                processingAnimation.style.display = 'none';
-                winnerDisplay.style.display = 'block';
+                // Button state update happens after modal is closed (in handleModalDone)
 
-                updateCount();
-                displayWinner(winner);
-
-                // Trigger confetti here after winner is displayed
-                if (confettiInstance) {
-                    confettiInstance.render(); // Start confetti
-                    setTimeout(() => confettiInstance.clear(), 3000); // Clear after 3 seconds
-                }
-
-
-                if (participants.length === 0) {
-                    drawButton.disabled = true;
-                    drawButton.textContent = 'All Winners Drawn';
-                } else {
-                    drawButton.disabled = false;
-                    drawButton.textContent = 'Draw Another Winner!';
-                }
-            }, 1500);
-        });
+            }, 1500); // 1.5-second animation delay
+        }
 
         /**
-         * Event listener for the "Start Over" button.
+         * Handles the click event for the start over button.
          */
-        startOverButton.addEventListener('click', () => {
+        function handleStartOver() {
             participants = [];
-            fileInput.value = '';
+            fileInput.value = ''; // Reset file input
             fileNameDisplay.textContent = 'No file selected.';
             uploadSection.classList.remove('hidden');
             drawSection.classList.add('hidden');
             resetDrawView();
-            drawButton.disabled = true;
+            drawButton.disabled = true; // Disable draw button initially
             drawButton.textContent = 'Upload a File';
-             if (confettiInstance) { // Clear confetti if present when starting over
-                confettiInstance.clear();
-            }
-        });
-
+            if (confettiInstance) confettiInstance.clear();
+        }
 
         /**
-         * Displays the winner and updates the list.
+         * Displays the winner in a pop-up modal.
+         * @param {string} winner - The name of the winner.
          */
-        function displayWinner(winner) {
-            winnerDisplay.textContent = winner;
-            winnerDisplayContainer.style.animation = 'none';
-            void winnerDisplayContainer.offsetWidth;
-            winnerDisplayContainer.style.animation = 'pop 0.3s ease-out';
+        function showWinnerPopup(winner) {
+            // Remove existing modal first if any
+            const existingModal = document.getElementById('winner-modal-overlay');
+            if (existingModal) existingModal.remove();
 
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'winner-modal-overlay';
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-[1100] animate-fadeInSlow'; // Highest z-index
+
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-white rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-md text-center transform animate-pop'; // Pop animation
+
+            const title = document.createElement('h2');
+            title.className = 'text-2xl font-bold text-gray-800 mb-2';
+            title.textContent = '🎉 Congratulations! 🎉';
+            modalContent.appendChild(title);
+
+            const winnerNameDisplay = document.createElement('p');
+            winnerNameDisplay.className = 'text-4xl sm:text-5xl font-extrabold text-indigo-600 my-6 break-words';
+            winnerNameDisplay.textContent = winner;
+            modalContent.appendChild(winnerNameDisplay);
+
+            const doneButton = document.createElement('button');
+            doneButton.className = 'mt-6 w-full bg-green-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500';
+            doneButton.textContent = 'Done';
+            doneButton.onclick = () => handleModalDone(winner, modalOverlay); // Pass winner and modal
+            modalContent.appendChild(doneButton);
+
+            modalOverlay.appendChild(modalContent);
+            document.body.appendChild(modalOverlay);
+
+            // Trigger Confetti when modal appears
+            if (confettiInstance) {
+                confettiInstance.render();
+                // No auto-clear, clear on Done button click
+            }
+
+             doneButton.focus(); // Focus the button for accessibility
+        }
+
+        /**
+         * Handles the "Done" button click in the winner modal.
+         * @param {string} winner - The winner's name.
+         * @param {HTMLElement} modalOverlay - The modal overlay element to remove.
+         */
+        function handleModalDone(winner, modalOverlay) {
+            // Add winner to the past list *after* acknowledging
+            addWinnerToList(winner);
+
+             // Clear confetti when closing modal
+            if (confettiInstance) {
+                 confettiInstance.clear();
+            }
+
+            modalOverlay.remove(); // Close the modal
+
+            // Update button state after modal is closed
+            if (participants.length === 0) {
+                 drawButton.disabled = true;
+                 drawButton.textContent = 'All Winners Drawn';
+            } else {
+                 drawButton.disabled = false;
+                 drawButton.textContent = 'Draw Another Winner!';
+            }
+        }
+
+         /**
+         * Adds the winner to the displayed past winners list.
+         * @param {string} winner - The name of the winner.
+         */
+        function addWinnerToList(winner) {
             const li = document.createElement('li');
             li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
             li.textContent = winner;
-            winnersList.prepend(li);
-            pastWinnersContainer.style.display = 'block';
+            winnersList.prepend(li); // Add to top
+            pastWinnersContainer.style.display = 'block'; // Make sure container is visible
         }
 
         /**
@@ -359,13 +396,15 @@
         }
 
         /**
-         * Simple modal alert.
+         * Simple modal alert for errors/info.
          */
         function showModal(title, message) {
-            if (document.getElementById('alert-modal')) return;
+            const existingModal = document.getElementById('alert-modal');
+            if (existingModal) existingModal.remove();
+
             const modalOverlay = document.createElement('div');
             modalOverlay.id = 'alert-modal';
-            modalOverlay.className = 'fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 animate-fadeInSlow';
+            modalOverlay.className = 'fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-[1100] animate-fadeInSlow'; // Ensure modal is above confetti too
             const modalContent = document.createElement('div');
             modalContent.className = 'bg-white rounded-lg shadow-xl p-6 w-full max-w-sm';
             const modalTitle = document.createElement('h3');
