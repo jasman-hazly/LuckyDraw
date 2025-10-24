@@ -64,7 +64,7 @@
             display: inline-block;
             width: 3rem;
             height: 3rem;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205 1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
@@ -75,7 +75,6 @@
         }
          /* Canvas and Modal z-index */
         #confetti-canvas { z-index: 1050; /* Above everything but modal */}
-        /* MODIFICATION: Use z-index for the HTML modals */
         #winner-modal, #alert-modal { z-index: 1100; /* Highest */ }
 
     </style>
@@ -153,8 +152,14 @@
                         <ul id="winnersList"
                             class="mt-4 h-96 max-h-[70vh] overflow-y-auto space-y-2 rounded-lg bg-gray-50 p-4 border border-gray-200">
                             </ul>
+                        
+                        <button id="downloadWinnersButton"
+                                class="mt-4 w-full rounded bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                           Download Winners (.csv)
+                        </button>
+                        
                         <button id="clearHistoryButton"
-                                class="mt-4 w-full rounded bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                class="mt-2 w-full rounded bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                            Clear All History
                         </button>
                     </div>
@@ -203,7 +208,6 @@
         let participants = [];
         let confettiInstance;
         let currentWinner = null;
-        // MODIFICATION: Key for localStorage
         const WINNERS_STORAGE_KEY = 'luckyDrawWinners';
 
         // --- DOM Elements ---
@@ -218,9 +222,7 @@
         const winnersList = document.getElementById('winnersList');
         const startOverButton = document.getElementById('startOverButton');
         
-        // MODIFICATION: Get new button and modal elements
         const clearHistoryButton = document.getElementById('clearHistoryButton');
-        
         const winnerModal = document.getElementById('winner-modal');
         const winnerNameDisplay = document.getElementById('winner-name-display');
         const winnerDoneBtn = document.getElementById('winner-done-btn');
@@ -229,6 +231,9 @@
         const alertModalTitle = document.getElementById('alert-modal-title');
         const alertModalMessage = document.getElementById('alert-modal-message');
         const alertOkBtn = document.getElementById('alert-ok-btn');
+        
+        // NEW: Get the download button
+        const downloadWinnersButton = document.getElementById('downloadWinnersButton');
 
         // --- Confetti Setup ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -249,7 +254,6 @@
             document.body.appendChild(confettiCanvas);
             confettiInstance = new ConfettiGenerator(confettiSettings);
 
-            // MODIFICATION: Load saved winners on page load
             loadSavedWinners();
         });
 
@@ -260,6 +264,9 @@
         clearHistoryButton.addEventListener('click', clearWinnerHistory);
         winnerDoneBtn.addEventListener('click', handleModalDone);
         alertOkBtn.addEventListener('click', hideAlertModal);
+
+        // NEW: Add listener for the download button
+        downloadWinnersButton.addEventListener('click', downloadWinners);
 
         // --- Functions ---
 
@@ -281,7 +288,6 @@
                                      .filter(name => name.length > 0);
                 
                 if (allNames.length > 0) {
-                    // MODIFICATION: Filter out names that have already won
                     const savedWinners = getSavedWinners();
                     participants = allNames.filter(name => !savedWinners.includes(name));
 
@@ -289,7 +295,6 @@
                          showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
                     }
                     
-                    // MODIFICATION: Shuffle the list ONCE on load for O(1) drawing
                     shuffleArray(participants);
                     
                     uploadSection.classList.add('hidden');
@@ -335,16 +340,13 @@
 
             if (confettiInstance) confettiInstance.clear();
 
-            // --- MODIFICATION: Draw is now O(1) ---
-            // Get the "last" person from the *pre-shuffled* list.
-            currentWinner = participants.pop();
-            // -------------------------------
+            currentWinner = participants.pop(); // O(1) draw operation
 
             setTimeout(() => {
                 processingSection.classList.add('hidden');
                 showWinnerPopup(currentWinner);
-                updateCount(); // Update count after removal
-            }, 1500); // 1.5-second animation delay
+                updateCount();
+            }, 1500);
         }
 
         /**
@@ -360,7 +362,7 @@
         }
 
         /**
-         * MODIFICATION: Accessibility event handler for 'Escape' key.
+         * Accessibility event handler for 'Escape' key.
          */
         function handleKeydown(e) {
             if (e.key === 'Escape') {
@@ -374,28 +376,26 @@
         };
 
         /**
-         * MODIFICATION: Displays the winner modal from the HTML.
+         * Displays the winner modal from the HTML.
          */
         function showWinnerPopup(winner) {
             winnerNameDisplay.textContent = winner;
             winnerModal.classList.remove('hidden');
-            winnerModal.classList.add('flex'); // Use flex for centering
+            winnerModal.classList.add('flex');
             
-            window.addEventListener('keydown', handleKeydown); // Add Escape key listener
+            window.addEventListener('keydown', handleKeydown);
+            winnerDoneBtn.focus();
 
             if (confettiInstance) {
                 confettiInstance.render();
             }
-
-            winnerDoneBtn.focus();
         }
 
         /**
-         * MODIFICATION: Handles closing the winner modal.
+         * Handles closing the winner modal.
          */
         function handleModalDone() {
-            // Add winner to the list (which also saves to localStorage)
-            addWinnerToList(currentWinner);
+            addWinnerToList(currentWinner); // This also saves to localStorage
 
             if (confettiInstance) {
                  confettiInstance.clear();
@@ -404,9 +404,8 @@
             winnerModal.classList.add('hidden');
             winnerModal.classList.remove('flex');
             
-            window.removeEventListener('keydown', handleKeydown); // Remove Escape key listener
+            window.removeEventListener('keydown', handleKeydown);
 
-            // Update button state
             if (participants.length === 0) {
                  drawButton.disabled = true;
                  drawButton.textContent = 'All Winners Drawn';
@@ -417,7 +416,7 @@
         }
 
          /**
-         * MODIFICATION: Adds winner to list AND saves to localStorage.
+         * Adds winner to list AND saves to localStorage.
          */
         function addWinnerToList(winner) {
             // 1. Add to visual list
@@ -430,13 +429,13 @@
             // 2. Save to localStorage
             const savedWinners = getSavedWinners();
             if (!savedWinners.includes(winner)) {
-                 savedWinners.unshift(winner); // Add new winner to the beginning
+                 savedWinners.unshift(winner);
                  localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinners));
             }
         }
 
         /**
-         * The CSPRNG Function (remains the same).
+         * The CSPRNG Function.
          */
         function getSecureRandom(max) {
             const randomBuffer = new Uint32Array(1);
@@ -446,7 +445,7 @@
         }
 
         /**
-         * MODIFICATION: Fisher-Yates Shuffle function.
+         * Fisher-Yates Shuffle function.
          */
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -463,7 +462,7 @@
         }
 
         /**
-         * MODIFICATION: Shows the alert modal from the HTML.
+         * Shows the alert modal from the HTML.
          */
         function showModal(title, message) {
             alertModalTitle.textContent = title;
@@ -477,7 +476,7 @@
         }
 
         /**
-         * MODIFICATION: Hides the alert modal.
+         * Hides the alert modal.
          */
         function hideAlertModal() {
             alertModal.classList.add('hidden');
@@ -486,7 +485,7 @@
         }
 
         /**
-         * MODIFICATION: Helper to get parsed winners from localStorage.
+         * Helper to get parsed winners from localStorage.
          */
         function getSavedWinners() {
              const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
@@ -494,34 +493,75 @@
         }
         
         /**
-         * MODIFICATION: Loads and displays winners from localStorage on startup.
+         * Loads and displays winners from localStorage on startup.
          */
         function loadSavedWinners() {
             const savedWinners = getSavedWinners();
             if (savedWinners.length > 0) {
                 winnersList.innerHTML = ''; // Clear any existing
                 savedWinners.forEach(winner => {
-                     // Add to visual list without re-saving
                     const li = document.createElement('li');
                     li.className = 'p-2 bg-white rounded shadow-sm text-gray-700';
                     li.textContent = winner;
-                    winnersList.appendChild(li); // Append to maintain saved order
+                    winnersList.appendChild(li);
                 });
                 pastWinnersContainer.style.display = 'block';
             }
         }
 
         /**
-         * MODIFICATION: Clears the winner history from storage and the UI.
+         * Clears the winner history from storage and the UI.
          */
         function clearWinnerHistory() {
-            // Optional: Add a confirmation dialog
             if (confirm('Are you sure you want to permanently clear all winner history? This cannot be undone.')) {
                 localStorage.removeItem(WINNERS_STORAGE_KEY);
                 winnersList.innerHTML = '';
                 pastWinnersContainer.style.display = 'none';
                 showModal('History Cleared', 'All past winners have been cleared.');
             }
+        }
+
+        // --- NEW: Function to download winners as a CSV ---
+        /**
+         * Creates and downloads a CSV file of all saved winners.
+         */
+        function downloadWinners() {
+            const savedWinners = getSavedWinners();
+
+            if (savedWinners.length === 0) {
+                showModal('No Winners', 'There are no winners in the history to download.');
+                return;
+            }
+
+            // 1. Format as CSV content (string)
+            // The list is already saved in reverse chronological order (newest first).
+            // We'll reverse it back to chronological for the export.
+            let csvContent = "Winners\n"; // CSV Header
+            savedWinners.slice().reverse().forEach(winner => {
+                // Basic CSV escaping: quote the name and double-up any existing quotes
+                const escapedWinner = `"${winner.replace(/"/g, '""')}"`;
+                csvContent += `${escapedWinner}\n`; 
+            });
+
+            // 2. Create the Blob
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+            // 3. Create a temporary download link
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+
+            // 4. Set a dynamic filename with the date
+            const date = new Date();
+            const dateString = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+            link.setAttribute("download", `lucky_draw_winners_${dateString}.csv`);
+            
+            // 5. Trigger download and clean up
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url); // Clean up the temporary URL
         }
 
     </script>
