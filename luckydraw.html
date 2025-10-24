@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unbiased Lucky Draw - Pop-up Winner</title>
+    <title>Unbiased Lucky Draw - Persistent & Performant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -64,13 +64,18 @@
             display: inline-block;
             width: 3rem;
             height: 3rem;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
         }
+        /* Class to hide elements */
+        .hidden {
+            display: none;
+        }
          /* Canvas and Modal z-index */
         #confetti-canvas { z-index: 1050; /* Above everything but modal */}
+        /* MODIFICATION: Use z-index for the HTML modals */
         #winner-modal, #alert-modal { z-index: 1100; /* Highest */ }
 
     </style>
@@ -148,6 +153,10 @@
                         <ul id="winnersList"
                             class="mt-4 h-96 max-h-[70vh] overflow-y-auto space-y-2 rounded-lg bg-gray-50 p-4 border border-gray-200">
                             </ul>
+                        <button id="clearHistoryButton"
+                                class="mt-4 w-full rounded bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                           Clear All History
+                        </button>
                     </div>
                 </div>
             </div>
@@ -163,11 +172,9 @@
             <h2 id="winner-modal-title" class="text-2xl font-bold text-gray-800 mb-2">
                 🎉 Congratulations! 🎉
             </h2>
-
             <p id="winner-name-display"
                class="text-4xl sm:text-5xl font-extrabold text-indigo-600 my-6 break-words">
                 </p>
-
             <button id="winner-done-btn"
                     class="mt-6 w-full bg-green-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                 Done
@@ -195,7 +202,9 @@
     <script>
         let participants = [];
         let confettiInstance;
-        let currentWinner = null; // Variable to store the winner temporarily
+        let currentWinner = null;
+        // MODIFICATION: Key for localStorage
+        const WINNERS_STORAGE_KEY = 'luckyDrawWinners';
 
         // --- DOM Elements ---
         const uploadSection = document.getElementById('uploadSection');
@@ -208,8 +217,10 @@
         const pastWinnersContainer = document.getElementById('pastWinnersContainer');
         const winnersList = document.getElementById('winnersList');
         const startOverButton = document.getElementById('startOverButton');
-
-        // --- IMPROVEMENT: Get modal elements from the DOM ---
+        
+        // MODIFICATION: Get new button and modal elements
+        const clearHistoryButton = document.getElementById('clearHistoryButton');
+        
         const winnerModal = document.getElementById('winner-modal');
         const winnerNameDisplay = document.getElementById('winner-name-display');
         const winnerDoneBtn = document.getElementById('winner-done-btn');
@@ -218,7 +229,6 @@
         const alertModalTitle = document.getElementById('alert-modal-title');
         const alertModalMessage = document.getElementById('alert-modal-message');
         const alertOkBtn = document.getElementById('alert-ok-btn');
-        // ---
 
         // --- Confetti Setup ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -238,12 +248,18 @@
             confettiCanvas.style.pointerEvents = 'none'; confettiCanvas.style.zIndex = '1050';
             document.body.appendChild(confettiCanvas);
             confettiInstance = new ConfettiGenerator(confettiSettings);
+
+            // MODIFICATION: Load saved winners on page load
+            loadSavedWinners();
         });
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', handleFileUpload);
         drawButton.addEventListener('click', handleDrawClick);
         startOverButton.addEventListener('click', handleStartOver);
+        clearHistoryButton.addEventListener('click', clearWinnerHistory);
+        winnerDoneBtn.addEventListener('click', handleModalDone);
+        alertOkBtn.addEventListener('click', hideAlertModal);
 
         // --- Functions ---
 
@@ -260,17 +276,25 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 const text = e.target.result;
-                participants = text.split('\n')
-                                   .map(name => name.trim())
-                                   .filter(name => name.length > 0);
+                const allNames = text.split('\n')
+                                     .map(name => name.trim())
+                                     .filter(name => name.length > 0);
                 
-                if (participants.length > 0) {
-                    // --- IMPROVEMENT: Shuffle the list ONCE on load ---
+                if (allNames.length > 0) {
+                    // MODIFICATION: Filter out names that have already won
+                    const savedWinners = getSavedWinners();
+                    participants = allNames.filter(name => !savedWinners.includes(name));
+
+                    if (participants.length === 0) {
+                         showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
+                    }
+                    
+                    // MODIFICATION: Shuffle the list ONCE on load for O(1) drawing
                     shuffleArray(participants);
-                    // ---
+                    
                     uploadSection.classList.add('hidden');
                     drawSection.classList.remove('hidden');
-                    resetDrawView();
+                    resetDrawView(allNames.length);
                 } else {
                     showModal('Error', 'File is empty or could not be read. Please make sure it is a single column of names.');
                     fileNameDisplay.textContent = 'Invalid file.';
@@ -281,15 +305,18 @@
         }
 
         /**
-         * Resets the draw section view.
+         * Resets the draw section view, but NOT the winner list.
          */
         function resetDrawView() {
             updateCount();
-            drawButton.disabled = false;
-            drawButton.textContent = 'Draw a Winner!';
+            if (participants.length === 0) {
+                 drawButton.disabled = true;
+                 drawButton.textContent = 'All Winners Drawn';
+            } else {
+                 drawButton.disabled = false;
+                 drawButton.textContent = 'Draw a Winner!';
+            }
             processingSection.classList.add('hidden');
-            winnersList.innerHTML = '';
-            pastWinnersContainer.style.display = 'none';
             currentWinner = null;
         }
 
@@ -308,7 +335,7 @@
 
             if (confettiInstance) confettiInstance.clear();
 
-            // --- IMPROVEMENT: Draw is now O(1) ---
+            // --- MODIFICATION: Draw is now O(1) ---
             // Get the "last" person from the *pre-shuffled* list.
             currentWinner = participants.pop();
             // -------------------------------
@@ -317,11 +344,11 @@
                 processingSection.classList.add('hidden');
                 showWinnerPopup(currentWinner);
                 updateCount(); // Update count after removal
-            }, 1500);
+            }, 1500); // 1.5-second animation delay
         }
 
         /**
-         * Handles the click event for the start over button.
+         * Resets the entire app to the upload screen.
          */
         function handleStartOver() {
             participants = [];
@@ -329,33 +356,32 @@
             fileNameDisplay.textContent = 'No file selected.';
             uploadSection.classList.remove('hidden');
             drawSection.classList.add('hidden');
-            resetDrawView();
-            drawButton.disabled = true;
-            drawButton.textContent = 'Upload a File';
             if (confettiInstance) confettiInstance.clear();
         }
 
-        // --- IMPROVEMENT: Accessibility event handler for 'Escape' key ---
-        const handleModalKeydown = (e) => {
+        /**
+         * MODIFICATION: Accessibility event handler for 'Escape' key.
+         */
+        function handleKeydown(e) {
             if (e.key === 'Escape') {
-                handleModalDone();
+                if (!winnerModal.classList.contains('hidden')) {
+                    handleModalDone();
+                }
+                if (!alertModal.classList.contains('hidden')) {
+                    hideAlertModal();
+                }
             }
         };
 
         /**
-         * Displays the winner in a pop-up modal.
-         * @param {string} winner - The name of the winner.
+         * MODIFICATION: Displays the winner modal from the HTML.
          */
         function showWinnerPopup(winner) {
             winnerNameDisplay.textContent = winner;
             winnerModal.classList.remove('hidden');
             winnerModal.classList.add('flex'); // Use flex for centering
-
-            // Set up the "Done" button click handler
-            winnerDoneBtn.onclick = () => handleModalDone();
             
-            // --- IMPROVEMENT: Add Escape key listener ---
-            window.addEventListener('keydown', handleModalKeydown);
+            window.addEventListener('keydown', handleKeydown); // Add Escape key listener
 
             if (confettiInstance) {
                 confettiInstance.render();
@@ -365,10 +391,10 @@
         }
 
         /**
-         * Handles the "Done" button click in the winner modal.
+         * MODIFICATION: Handles closing the winner modal.
          */
         function handleModalDone() {
-            // Add winner to the past list *after* acknowledging
+            // Add winner to the list (which also saves to localStorage)
             addWinnerToList(currentWinner);
 
             if (confettiInstance) {
@@ -378,9 +404,9 @@
             winnerModal.classList.add('hidden');
             winnerModal.classList.remove('flex');
             
-            // --- IMPROVEMENT: Remove Escape key listener ---
-            window.removeEventListener('keydown', handleModalKeydown);
+            window.removeEventListener('keydown', handleKeydown); // Remove Escape key listener
 
+            // Update button state
             if (participants.length === 0) {
                  drawButton.disabled = true;
                  drawButton.textContent = 'All Winners Drawn';
@@ -391,43 +417,43 @@
         }
 
          /**
-         * Adds the winner to the displayed past winners list.
-         * @param {string} winner - The name of the winner.
+         * MODIFICATION: Adds winner to list AND saves to localStorage.
          */
         function addWinnerToList(winner) {
+            // 1. Add to visual list
             const li = document.createElement('li');
             li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
             li.textContent = winner;
             winnersList.prepend(li);
             pastWinnersContainer.style.display = 'block';
+
+            // 2. Save to localStorage
+            const savedWinners = getSavedWinners();
+            if (!savedWinners.includes(winner)) {
+                 savedWinners.unshift(winner); // Add new winner to the beginning
+                 localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinners));
+            }
         }
 
         /**
-         * The CSPRNG Function (remains the same, it's perfect).
+         * The CSPRNG Function (remains the same).
          */
         function getSecureRandom(max) {
             const randomBuffer = new Uint32Array(1);
             window.crypto.getRandomValues(randomBuffer);
             let randomNumber = randomBuffer[0];
-            // Scale to 0 (inclusive) to max (exclusive)
             return Math.floor((randomNumber / (0xFFFFFFFF + 1)) * max);
         }
 
-        // --- IMPROVEMENT: Fisher-Yates Shuffle function ---
         /**
-         * Shuffles an array in place using the Fisher-Yates algorithm
-         * and a secure random number generator.
-         * @param {Array} array - The array to shuffle.
+         * MODIFICATION: Fisher-Yates Shuffle function.
          */
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
-                // Get a random index from 0 to i (inclusive)
                 const j = getSecureRandom(i + 1); 
-                // Swap elements
                 [array[i], array[j]] = [array[j], array[i]];
             }
         }
-
 
         /**
          * Updates the participant count display.
@@ -437,22 +463,65 @@
         }
 
         /**
-         * Simple modal alert for errors/info.
-         * --- IMPROVEMENT: Uses the modal from the DOM ---
+         * MODIFICATION: Shows the alert modal from the HTML.
          */
         function showModal(title, message) {
             alertModalTitle.textContent = title;
             alertModalMessage.textContent = message;
             
             alertModal.classList.remove('hidden');
-            alertModal.classList.add('flex'); // Use flex for centering
+            alertModal.classList.add('flex');
             
-            alertOkBtn.onclick = () => {
-                alertModal.classList.add('hidden');
-                alertModal.classList.remove('flex');
-            };
-            
+            window.addEventListener('keydown', handleKeydown);
             alertOkBtn.focus();
+        }
+
+        /**
+         * MODIFICATION: Hides the alert modal.
+         */
+        function hideAlertModal() {
+            alertModal.classList.add('hidden');
+            alertModal.classList.remove('flex');
+            window.removeEventListener('keydown', handleKeydown);
+        }
+
+        /**
+         * MODIFICATION: Helper to get parsed winners from localStorage.
+         */
+        function getSavedWinners() {
+             const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
+             return winnersJson ? JSON.parse(winnersJson) : [];
+        }
+        
+        /**
+         * MODIFICATION: Loads and displays winners from localStorage on startup.
+         */
+        function loadSavedWinners() {
+            const savedWinners = getSavedWinners();
+            if (savedWinners.length > 0) {
+                winnersList.innerHTML = ''; // Clear any existing
+                savedWinners.forEach(winner => {
+                     // Add to visual list without re-saving
+                    const li = document.createElement('li');
+                    li.className = 'p-2 bg-white rounded shadow-sm text-gray-700';
+                    li.textContent = winner;
+                    winnersList.appendChild(li); // Append to maintain saved order
+                });
+                pastWinnersContainer.style.display = 'block';
+            }
+        }
+
+        /**
+         * MODIFICATION: Clears the winner history from storage and the UI.
+         */
+        function clearWinnerHistory() {
+            // Optional: Add a confirmation dialog
+            if (confirm('Are you sure you want to permanently clear all winner history? This cannot be undone.')) {
+                localStorage.removeItem(WINNERS_STORAGE_KEY);
+                winnersList.innerHTML = '';
+                pastWinnersContainer.style.display = 'none';
+                showModal('History Cleared', 'All past winners have been cleared.');
+            }
         }
 
     </script>
