@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unbiased Lucky Draw - Pop-up Winner</title>
-    <!-- Load Tailwind CSS for styling --><script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -64,28 +64,23 @@
             display: inline-block;
             width: 3rem;
             height: 3rem;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205-1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
         }
-        /* Class to hide elements */
-        .hidden {
-            display: none;
-        }
          /* Canvas and Modal z-index */
         #confetti-canvas { z-index: 1050; /* Above everything but modal */}
-        #winner-modal-overlay { z-index: 1100; /* Highest */ }
-        #alert-modal { z-index: 1100; /* Highest */ } /* Ensure error modal is also on top */
+        #winner-modal, #alert-modal { z-index: 1100; /* Highest */ }
 
     </style>
-    <!-- Confetti.js library --><script src="https://cdn.jsdelivr.net/npm/confetti-js@0.0.18/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/confetti-js@0.0.18/dist/index.min.js"></script>
 </head>
 <body class="h-full flex items-center justify-center p-4 bg-gradient-to-br from-indigo-100 via-white to-sky-100 font-sans">
 
     <main class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-2xl shadow-2xl">
 
-        <!-- ===== UPLOAD SECTION ===== --><div id="uploadSection" class="animate-fadeInSlow">
+        <div id="uploadSection" class="animate-fadeInSlow">
             <div class="text-center">
                 <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">Unbiased Lucky Draw</h1>
                 <p class="mt-3 text-lg text-gray-600">
@@ -105,13 +100,13 @@
                 <p class="mt-1 text-xs text-gray-500">File should contain one name per line.</p>
             </div>
              <p class="mt-6 text-center text-sm text-gray-500">
-                Uses a Cryptographically Secure RNG & the Fisher-Yates principle.
+                Uses a Cryptographically Secure RNG & the Fisher-Yates Shuffle.
             </p>
         </div>
 
-        <!-- ===== DRAW SECTION ===== --><div id="drawSection" class="hidden animate-fadeInSlow">
+        <div id="drawSection" class="hidden animate-fadeInSlow">
             <div class="md:flex md:gap-x-8 lg:gap-x-12">
-                <!-- Left Panel: Draw Controls --><div class="md:w-2/3">
+                <div class="md:w-2/3">
                     <div class="text-center">
                          <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">Draw a Winner</h1>
                          <p class="mt-3 text-lg text-gray-600">
@@ -119,7 +114,7 @@
                          </p>
                     </div>
 
-                    <!-- Draw Button Area --><div class="mt-6 text-center">
+                    <div class="mt-6 text-center">
                         <div class="text-2xl font-medium text-gray-700">
                             Remaining Participants:
                             <strong id="count" class="text-indigo-600">0</strong>
@@ -132,14 +127,14 @@
                         </button>
                     </div>
 
-                     <!-- Processing Animation Area (now separate) --><div id="processingSection" class="mt-8 text-center hidden">
+                     <div id="processingSection" class="mt-8 text-center hidden">
                         <div class="flex flex-col items-center justify-center gap-2 p-6 min-h-[80px] bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
                             <div class="icon-gear text-indigo-500 animate-spin"></div>
                             <span class="text-xl text-indigo-700 font-semibold">Drawing... Please Wait</span>
                         </div>
                     </div>
 
-                    <!-- Start Over Button --><div class="mt-8 text-center">
+                    <div class="mt-8 text-center">
                         <button id="startOverButton"
                                 class="rounded bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                            Upload New List / Start Over
@@ -147,12 +142,12 @@
                     </div>
                 </div>
 
-                <!-- Right Panel: Past Winners List --><div class="md:w-1/3 mt-10 md:mt-0">
+                <div class="md:w-1/3 mt-10 md:mt-0">
                     <div id="pastWinnersContainer" class="sticky top-10" style="display: none;">
                         <h3 class="text-xl font-semibold text-gray-900 text-center">Past Winners</h3>
                         <ul id="winnersList"
                             class="mt-4 h-96 max-h-[70vh] overflow-y-auto space-y-2 rounded-lg bg-gray-50 p-4 border border-gray-200">
-                            <!-- Winners will be added here --></ul>
+                            </ul>
                     </div>
                 </div>
             </div>
@@ -160,9 +155,47 @@
 
     </main>
 
+    <div id="winner-modal"
+         class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
+         role="dialog" aria-modal="true" aria-labelledby="winner-modal-title">
+        
+        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-md text-center transform animate-pop">
+            <h2 id="winner-modal-title" class="text-2xl font-bold text-gray-800 mb-2">
+                🎉 Congratulations! 🎉
+            </h2>
+
+            <p id="winner-name-display"
+               class="text-4xl sm:text-5xl font-extrabold text-indigo-600 my-6 break-words">
+                </p>
+
+            <button id="winner-done-btn"
+                    class="mt-6 w-full bg-green-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Done
+            </button>
+        </div>
+    </div>
+
+    <div id="alert-modal"
+         class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
+         role="dialog" aria-modal="true" aria-labelledby="alert-modal-title">
+        
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 id="alert-modal-title" class="text-lg font-medium text-gray-900">
+                </h3>
+            <p id="alert-modal-message" class="mt-2 text-sm text-gray-600">
+                </p>
+            <button id="alert-ok-btn"
+                    class="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                OK
+            </button>
+        </div>
+    </div>
+
+
     <script>
         let participants = [];
         let confettiInstance;
+        let currentWinner = null; // Variable to store the winner temporarily
 
         // --- DOM Elements ---
         const uploadSection = document.getElementById('uploadSection');
@@ -171,22 +204,30 @@
         const fileNameDisplay = document.getElementById('fileName');
         const drawButton = document.getElementById('drawButton');
         const countDisplay = document.getElementById('count');
-        const processingSection = document.getElementById('processingSection'); // Get processing section
+        const processingSection = document.getElementById('processingSection');
         const pastWinnersContainer = document.getElementById('pastWinnersContainer');
         const winnersList = document.getElementById('winnersList');
         const startOverButton = document.getElementById('startOverButton');
-        let currentWinner = null; // Variable to store the winner temporarily
+
+        // --- IMPROVEMENT: Get modal elements from the DOM ---
+        const winnerModal = document.getElementById('winner-modal');
+        const winnerNameDisplay = document.getElementById('winner-name-display');
+        const winnerDoneBtn = document.getElementById('winner-done-btn');
+
+        const alertModal = document.getElementById('alert-modal');
+        const alertModalTitle = document.getElementById('alert-modal-title');
+        const alertModalMessage = document.getElementById('alert-modal-message');
+        const alertOkBtn = document.getElementById('alert-ok-btn');
+        // ---
 
         // --- Confetti Setup ---
         document.addEventListener('DOMContentLoaded', () => {
             const confettiSettings = {
                 target: 'confetti-canvas',
-                size: 1.5, max: 120, props: ['circle', 'triangle'], // Simpler shapes
-                colors: [[165,104,246],[230,61,135],[0,199,228],[253,214,126]], // Bright colors
+                size: 1.5, max: 120, props: ['circle', 'triangle'],
+                colors: [[165,104,246],[230,61,135],[0,199,228],[253,214,126]],
                 clock: 30, rotate: true, respawn: false, start_from_pointer: false,
-                spread: 70, // Wider spread
-                drift: 0, // Less drift
-                gravity: 1, // Normal gravity
+                spread: 70, drift: 0, gravity: 1,
                 width: window.innerWidth, height: window.innerHeight
             };
             const confettiCanvas = document.createElement('canvas');
@@ -222,7 +263,11 @@
                 participants = text.split('\n')
                                    .map(name => name.trim())
                                    .filter(name => name.length > 0);
+                
                 if (participants.length > 0) {
+                    // --- IMPROVEMENT: Shuffle the list ONCE on load ---
+                    shuffleArray(participants);
+                    // ---
                     uploadSection.classList.add('hidden');
                     drawSection.classList.remove('hidden');
                     resetDrawView();
@@ -242,7 +287,7 @@
             updateCount();
             drawButton.disabled = false;
             drawButton.textContent = 'Draw a Winner!';
-            processingSection.classList.add('hidden'); // Hide processing animation too
+            processingSection.classList.add('hidden');
             winnersList.innerHTML = '';
             pastWinnersContainer.style.display = 'none';
             currentWinner = null;
@@ -257,28 +302,22 @@
                 return;
             }
 
-            // Show processing, disable button
             processingSection.classList.remove('hidden');
             drawButton.disabled = true;
             drawButton.textContent = 'Drawing...';
 
-            if (confettiInstance) confettiInstance.clear(); // Clear previous confetti
+            if (confettiInstance) confettiInstance.clear();
 
-            // --- Select and Remove Winner ---
-            const winnerIndex = getSecureRandom(participants.length);
-            currentWinner = participants[winnerIndex]; // Store winner temporarily
-            participants.splice(winnerIndex, 1); // Remove winner from pool NOW
+            // --- IMPROVEMENT: Draw is now O(1) ---
+            // Get the "last" person from the *pre-shuffled* list.
+            currentWinner = participants.pop();
             // -------------------------------
 
-            // Simulate processing time
             setTimeout(() => {
-                processingSection.classList.add('hidden'); // Hide processing
-                showWinnerPopup(currentWinner); // Show the winner pop-up
+                processingSection.classList.add('hidden');
+                showWinnerPopup(currentWinner);
                 updateCount(); // Update count after removal
-
-                // Button state update happens after modal is closed (in handleModalDone)
-
-            }, 1500); // 1.5-second animation delay
+            }, 1500);
         }
 
         /**
@@ -286,77 +325,62 @@
          */
         function handleStartOver() {
             participants = [];
-            fileInput.value = ''; // Reset file input
+            fileInput.value = '';
             fileNameDisplay.textContent = 'No file selected.';
             uploadSection.classList.remove('hidden');
             drawSection.classList.add('hidden');
             resetDrawView();
-            drawButton.disabled = true; // Disable draw button initially
+            drawButton.disabled = true;
             drawButton.textContent = 'Upload a File';
             if (confettiInstance) confettiInstance.clear();
         }
+
+        // --- IMPROVEMENT: Accessibility event handler for 'Escape' key ---
+        const handleModalKeydown = (e) => {
+            if (e.key === 'Escape') {
+                handleModalDone();
+            }
+        };
 
         /**
          * Displays the winner in a pop-up modal.
          * @param {string} winner - The name of the winner.
          */
         function showWinnerPopup(winner) {
-            // Remove existing modal first if any
-            const existingModal = document.getElementById('winner-modal-overlay');
-            if (existingModal) existingModal.remove();
-
-            const modalOverlay = document.createElement('div');
-            modalOverlay.id = 'winner-modal-overlay';
-            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-[1100] animate-fadeInSlow'; // Highest z-index
-
-            const modalContent = document.createElement('div');
-            modalContent.className = 'bg-white rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-md text-center transform animate-pop'; // Pop animation
-
-            const title = document.createElement('h2');
-            title.className = 'text-2xl font-bold text-gray-800 mb-2';
-            title.textContent = '🎉 Congratulations! 🎉';
-            modalContent.appendChild(title);
-
-            const winnerNameDisplay = document.createElement('p');
-            winnerNameDisplay.className = 'text-4xl sm:text-5xl font-extrabold text-indigo-600 my-6 break-words';
             winnerNameDisplay.textContent = winner;
-            modalContent.appendChild(winnerNameDisplay);
+            winnerModal.classList.remove('hidden');
+            winnerModal.classList.add('flex'); // Use flex for centering
 
-            const doneButton = document.createElement('button');
-            doneButton.className = 'mt-6 w-full bg-green-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500';
-            doneButton.textContent = 'Done';
-            doneButton.onclick = () => handleModalDone(winner, modalOverlay); // Pass winner and modal
-            modalContent.appendChild(doneButton);
+            // Set up the "Done" button click handler
+            winnerDoneBtn.onclick = () => handleModalDone();
+            
+            // --- IMPROVEMENT: Add Escape key listener ---
+            window.addEventListener('keydown', handleModalKeydown);
 
-            modalOverlay.appendChild(modalContent);
-            document.body.appendChild(modalOverlay);
-
-            // Trigger Confetti when modal appears
             if (confettiInstance) {
                 confettiInstance.render();
-                // No auto-clear, clear on Done button click
             }
 
-             doneButton.focus(); // Focus the button for accessibility
+            winnerDoneBtn.focus();
         }
 
         /**
          * Handles the "Done" button click in the winner modal.
-         * @param {string} winner - The winner's name.
-         * @param {HTMLElement} modalOverlay - The modal overlay element to remove.
          */
-        function handleModalDone(winner, modalOverlay) {
+        function handleModalDone() {
             // Add winner to the past list *after* acknowledging
-            addWinnerToList(winner);
+            addWinnerToList(currentWinner);
 
-             // Clear confetti when closing modal
             if (confettiInstance) {
                  confettiInstance.clear();
             }
 
-            modalOverlay.remove(); // Close the modal
+            winnerModal.classList.add('hidden');
+            winnerModal.classList.remove('flex');
+            
+            // --- IMPROVEMENT: Remove Escape key listener ---
+            window.removeEventListener('keydown', handleModalKeydown);
 
-            // Update button state after modal is closed
             if (participants.length === 0) {
                  drawButton.disabled = true;
                  drawButton.textContent = 'All Winners Drawn';
@@ -374,19 +398,36 @@
             const li = document.createElement('li');
             li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
             li.textContent = winner;
-            winnersList.prepend(li); // Add to top
-            pastWinnersContainer.style.display = 'block'; // Make sure container is visible
+            winnersList.prepend(li);
+            pastWinnersContainer.style.display = 'block';
         }
 
         /**
-         * The CSPRNG Function.
+         * The CSPRNG Function (remains the same, it's perfect).
          */
         function getSecureRandom(max) {
             const randomBuffer = new Uint32Array(1);
             window.crypto.getRandomValues(randomBuffer);
             let randomNumber = randomBuffer[0];
+            // Scale to 0 (inclusive) to max (exclusive)
             return Math.floor((randomNumber / (0xFFFFFFFF + 1)) * max);
         }
+
+        // --- IMPROVEMENT: Fisher-Yates Shuffle function ---
+        /**
+         * Shuffles an array in place using the Fisher-Yates algorithm
+         * and a secure random number generator.
+         * @param {Array} array - The array to shuffle.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                // Get a random index from 0 to i (inclusive)
+                const j = getSecureRandom(i + 1); 
+                // Swap elements
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
 
         /**
          * Updates the participant count display.
@@ -397,35 +438,23 @@
 
         /**
          * Simple modal alert for errors/info.
+         * --- IMPROVEMENT: Uses the modal from the DOM ---
          */
         function showModal(title, message) {
-            const existingModal = document.getElementById('alert-modal');
-            if (existingModal) existingModal.remove();
-
-            const modalOverlay = document.createElement('div');
-            modalOverlay.id = 'alert-modal';
-            modalOverlay.className = 'fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-[1100] animate-fadeInSlow'; // Ensure modal is above confetti too
-            const modalContent = document.createElement('div');
-            modalContent.className = 'bg-white rounded-lg shadow-xl p-6 w-full max-w-sm';
-            const modalTitle = document.createElement('h3');
-            modalTitle.className = 'text-lg font-medium text-gray-900';
-            modalTitle.textContent = title;
-            modalContent.appendChild(modalTitle);
-            const modalMessage = document.createElement('p');
-            modalMessage.className = 'mt-2 text-sm text-gray-600';
-            modalMessage.textContent = message;
-            modalContent.appendChild(modalMessage);
-            const closeButton = document.createElement('button');
-            closeButton.className = 'mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500';
-            closeButton.textContent = 'OK';
-            closeButton.onclick = () => modalOverlay.remove();
-            modalContent.appendChild(closeButton);
-            modalOverlay.appendChild(modalContent);
-            document.body.appendChild(modalOverlay);
-            closeButton.focus();
+            alertModalTitle.textContent = title;
+            alertModalMessage.textContent = message;
+            
+            alertModal.classList.remove('hidden');
+            alertModal.classList.add('flex'); // Use flex for centering
+            
+            alertOkBtn.onclick = () => {
+                alertModal.classList.add('hidden');
+                alertModal.classList.remove('flex');
+            };
+            
+            alertOkBtn.focus();
         }
 
     </script>
 </body>
 </html>
-
