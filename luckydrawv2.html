@@ -64,7 +64,7 @@
             display: inline-block;
             width: 3rem;
             height: 3rem;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462-.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205 1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11-.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462-.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205 1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
@@ -173,12 +173,13 @@
          class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
          role="dialog" aria-modal="true" aria-labelledby="winner-modal-title">
         
-        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-md text-center transform animate-pop">
-            <h2 id="winner-modal-title" class="text-2xl font-bold text-gray-800 mb-2">
+        <div class="bg-white rounded-xl shadow-2xl p-8 sm:p-12 w-full max-w-2xl text-center transform animate-pop">
+            <h2 id="winner-modal-title" class="text-3xl font-bold text-gray-800 mb-2">
                 🎉 Congratulations! 🎉
             </h2>
+            
             <p id="winner-name-display"
-               class="text-4xl sm:text-5xl font-extrabold text-indigo-600 my-6 break-words">
+               class="text-5xl sm:text-7xl font-extrabold text-indigo-600 my-8 break-words">
                 </p>
             
             <div class="mt-6 flex flex-col sm:flex-row gap-3">
@@ -191,7 +192,7 @@
                     Done (Award Prize)
                 </button>
             </div>
-            </div>
+        </div>
     </div>
 
     <div id="alert-modal"
@@ -233,7 +234,7 @@
         const winnerModal = document.getElementById('winner-modal');
         const winnerNameDisplay = document.getElementById('winner-name-display');
         const winnerDoneBtn = document.getElementById('winner-done-btn');
-        const winnerMiaBtn = document.getElementById('winner-mia-btn'); // *** NEW: Get MIA button ***
+        const winnerMiaBtn = document.getElementById('winner-mia-btn'); 
         
         const alertModal = document.getElementById('alert-modal');
         const alertModalTitle = document.getElementById('alert-modal-title');
@@ -270,7 +271,7 @@
         startOverButton.addEventListener('click', handleStartOver);
         clearHistoryButton.addEventListener('click', clearWinnerHistory);
         winnerDoneBtn.addEventListener('click', handleModalDone);
-        winnerMiaBtn.addEventListener('click', handleMIA); // *** NEW: Add listener for MIA button ***
+        winnerMiaBtn.addEventListener('click', handleMIA); 
         alertOkBtn.addEventListener('click', hideAlertModal);
         downloadWinnersButton.addEventListener('click', downloadWinners);
 
@@ -398,7 +399,6 @@
             }
         }
 
-        // *** NEW: Helper function to close the modal and reset the button ***
         /**
          * Helper function to close the winner modal and reset draw button.
          */
@@ -424,7 +424,6 @@
         }
 
 
-        // *** MODIFIED: This function now just saves the winner and closes ***
         /**
          * Handles closing the winner modal AND saving the winner.
          */
@@ -435,7 +434,6 @@
             closeWinnerModal();
         }
 
-        // *** NEW: Function to handle the MIA click ***
         /**
          * Handles the 'MIA' (Missing In Action) button click.
          * Closes the modal without saving the winner.
@@ -605,4 +603,3 @@
     </script>
 </body>
 </html>
-
