@@ -1,1 +1,608 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unbiased Lucky Draw - Persistent & Performant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    keyframes: {
+                        pop: {
+                            '0%': { transform: 'scale(0.9)', opacity: 0 },
+                            '70%': { transform: 'scale(1.05)', opacity: 1 },
+                            '100%': { transform: 'scale(1)', opacity: 1 },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: 0, transform: 'translateY(10px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                         fadeInSlow: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 },
+                        },
+                        spin: {
+                             '0%': { transform: 'rotate(0deg)' },
+                             '100%': { transform: 'rotate(360deg)' },
+                         }
+                    },
+                    animation: {
+                        pop: 'pop 0.4s ease-out forwards', // Apply pop to modal
+                        fadeIn: 'fadeIn 0.4s ease-out forwards',
+                        fadeInSlow: 'fadeInSlow 0.6s ease-out forwards',
+                        spin: 'spin 1.5s linear infinite',
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom style for the file input button */
+        .file-input-button {
+            background-color: #4f46e5;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+        .file-input-button:hover {
+            background-color: #4338ca;
+        }
+        input[type="file"] {
+            display: none;
+        }
+         /* Icon for the gear */
+        .icon-gear {
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462-.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205 1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+        }
+        /* Class to hide elements */
+        .hidden {
+            display: none;
+        }
+         /* Canvas and Modal z-index */
+        #confetti-canvas { z-index: 1050; /* Above everything but modal */}
+        #winner-modal, #alert-modal { z-index: 1100; /* Highest */ }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/confetti-js@0.0.18/dist/index.min.js"></script>
+</head>
+<body class="h-full flex items-center justify-center p-4 bg-gradient-to-br from-indigo-100 via-white to-sky-100 font-sans">
+
+    <main class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-2xl shadow-2xl">
+
+        <div id="uploadSection" class="animate-fadeInSlow">
+            <div class="text-center">
+                <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">Unbiased Lucky Draw</h1>
+                <p class="mt-3 text-lg text-gray-600">
+                    Step 1: Upload Your Participant List
+                </p>
+            </div>
+
+            <div class="mt-8 text-center border-2 border-dashed border-gray-300 rounded-lg p-8 sm:p-12">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto h-12 w-12 text-gray-400">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                </svg>
+                <label for="csvFile" class="mt-4 file-input-button">
+                    Select .CSV File
+                </label>
+                <input type="file" id="csvFile" accept=".csv">
+                <p id="fileName" class="mt-2 text-sm text-gray-600">No file selected.</p>
+                <p class="mt-1 text-xs text-gray-500">File should contain one name per line.</p>
+            </div>
+             <p class="mt-6 text-center text-sm text-gray-500">
+                Uses a Cryptographically Secure RNG & the Fisher-Yates Shuffle.
+            </p>
+        </div>
+
+        <div id="drawSection" class="hidden animate-fadeInSlow">
+            <div class="md:flex md:gap-x-8 lg:gap-x-12">
+                <div class="md:w-2/3">
+                    <div class="text-center">
+                         <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">Draw a Winner</h1>
+                         <p class="mt-3 text-lg text-gray-600">
+                            Step 2: Click the button to select a winner.
+                         </p>
+                    </div>
+
+                    <div class="mt-6 text-center">
+                        <div class="text-2xl font-medium text-gray-700">
+                            Remaining Participants:
+                            <strong id="count" class="text-indigo-600">0</strong>
+                        </div>
+                        <button id="drawButton"
+                                class="mt-4 w-full sm:w-2/3 rounded-lg bg-green-600 px-8 py-4 text-2xl font-bold text-white shadow-lg transition-all duration-200 ease-in-out
+                                       hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300
+                                       disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">
+                            Draw a Winner!
+                        </button>
+                    </div>
+
+                     <div id="processingSection" class="mt-8 text-center hidden">
+                        <div class="flex flex-col items-center justify-center gap-2 p-6 min-h-[80px] bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
+                            <div class="icon-gear text-indigo-500 animate-spin"></div>
+                            <span class="text-xl text-indigo-700 font-semibold">Drawing... Please Wait</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <button id="startOverButton"
+                                class="rounded bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                           Upload New List / Start Over
+                        </button>
+                    </div>
+                </div>
+
+                <div class="md:w-1/3 mt-10 md:mt-0">
+                    <div id="pastWinnersContainer" class="sticky top-10" style="display: none;">
+                        <h3 class="text-xl font-semibold text-gray-900 text-center">Past Winners</h3>
+                        <ul id="winnersList"
+                            class="mt-4 h-96 max-h-[70vh] overflow-y-auto space-y-2 rounded-lg bg-gray-50 p-4 border border-gray-200">
+                            </ul>
+                        
+                        <button id="downloadWinnersButton"
+                                class="mt-4 w-full rounded bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                           Download Winners (.csv)
+                        </button>
+                        
+                        <button id="clearHistoryButton"
+                                class="mt-2 w-full rounded bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                           Clear All History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="winner-modal"
+         class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
+         role="dialog" aria-modal="true" aria-labelledby="winner-modal-title">
+        
+        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-md text-center transform animate-pop">
+            <h2 id="winner-modal-title" class="text-2xl font-bold text-gray-800 mb-2">
+                🎉 Congratulations! 🎉
+            </h2>
+            <p id="winner-name-display"
+               class="text-4xl sm:text-5xl font-extrabold text-indigo-600 my-6 break-words">
+                </p>
+            
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <button id="winner-mia-btn"
+                        class="w-full sm:w-1/2 bg-gray-500 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                    MIA (Not Present)
+                </button>
+                <button id="winner-done-btn"
+                        class="w-full sm:w-1/2 bg-green-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Done (Award Prize)
+                </button>
+            </div>
+            </div>
+    </div>
+
+    <div id="alert-modal"
+         class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
+         role="dialog" aria-modal="true" aria-labelledby="alert-modal-title">
+        
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 id="alert-modal-title" class="text-lg font-medium text-gray-900">
+                </h3>
+            <p id="alert-modal-message" class="mt-2 text-sm text-gray-600">
+                </p>
+            <button id="alert-ok-btn"
+                    class="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                OK
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        let participants = [];
+        let confettiInstance;
+        let currentWinner = null;
+        const WINNERS_STORAGE_KEY = 'luckyDrawWinners';
+
+        // --- DOM Elements ---
+        const uploadSection = document.getElementById('uploadSection');
+        const drawSection = document.getElementById('drawSection');
+        const fileInput = document.getElementById('csvFile');
+        const fileNameDisplay = document.getElementById('fileName');
+        const drawButton = document.getElementById('drawButton');
+        const countDisplay = document.getElementById('count');
+        const processingSection = document.getElementById('processingSection');
+        const pastWinnersContainer = document.getElementById('pastWinnersContainer');
+        const winnersList = document.getElementById('winnersList');
+        const startOverButton = document.getElementById('startOverButton');
+        
+        const clearHistoryButton = document.getElementById('clearHistoryButton');
+        const winnerModal = document.getElementById('winner-modal');
+        const winnerNameDisplay = document.getElementById('winner-name-display');
+        const winnerDoneBtn = document.getElementById('winner-done-btn');
+        const winnerMiaBtn = document.getElementById('winner-mia-btn'); // *** NEW: Get MIA button ***
+        
+        const alertModal = document.getElementById('alert-modal');
+        const alertModalTitle = document.getElementById('alert-modal-title');
+        const alertModalMessage = document.getElementById('alert-modal-message');
+        const alertOkBtn = document.getElementById('alert-ok-btn');
+        
+        const downloadWinnersButton = document.getElementById('downloadWinnersButton');
+
+        // --- Confetti Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const confettiSettings = {
+                target: 'confetti-canvas',
+                size: 1.5, max: 120, props: ['circle', 'triangle'],
+                colors: [[165,104,246],[230,61,135],[0,199,228],[253,214,126]],
+                clock: 30, rotate: true, respawn: false, start_from_pointer: false,
+                spread: 70, drift: 0, gravity: 1,
+                width: window.innerWidth, height: window.innerHeight
+            };
+            const confettiCanvas = document.createElement('canvas');
+            confettiCanvas.id = 'confetti-canvas';
+            confettiCanvas.style.position = 'fixed';
+            confettiCanvas.style.top = '0'; confettiCanvas.style.left = '0';
+            confettiCanvas.style.width = '100%'; confettiCanvas.style.height = '100%';
+            confettiCanvas.style.pointerEvents = 'none'; confettiCanvas.style.zIndex = '1050';
+            document.body.appendChild(confettiCanvas);
+            confettiInstance = new ConfettiGenerator(confettiSettings);
+
+            loadSavedWinners();
+        });
+
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', handleFileUpload);
+        drawButton.addEventListener('click', handleDrawClick);
+        startOverButton.addEventListener('click', handleStartOver);
+        clearHistoryButton.addEventListener('click', clearWinnerHistory);
+        winnerDoneBtn.addEventListener('click', handleModalDone);
+        winnerMiaBtn.addEventListener('click', handleMIA); // *** NEW: Add listener for MIA button ***
+        alertOkBtn.addEventListener('click', hideAlertModal);
+        downloadWinnersButton.addEventListener('click', downloadWinners);
+
+        // --- Functions ---
+
+        /**
+         * Handles the file upload event.
+         */
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                fileNameDisplay.textContent = 'No file selected.';
+                return;
+            }
+            fileNameDisplay.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const allNames = text.split('\n')
+                                     .map(name => name.trim())
+                                     .filter(name => name.length > 0);
+                
+                if (allNames.length > 0) {
+                    const savedWinners = getSavedWinners();
+                    participants = allNames.filter(name => !savedWinners.includes(name));
+
+                    if (participants.length === 0) {
+                         showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
+                    }
+                    
+                    shuffleArray(participants);
+                    
+                    uploadSection.classList.add('hidden');
+                    drawSection.classList.remove('hidden');
+                    resetDrawView(allNames.length);
+                } else {
+                    showModal('Error', 'File is empty or could not be read. Please make sure it is a single column of names.');
+                    fileNameDisplay.textContent = 'Invalid file.';
+                }
+            };
+            reader.onerror = () => showModal('Error', 'An error occurred while reading the file.');
+            reader.readAsText(file);
+        }
+
+        /**
+         * Resets the draw section view, but NOT the winner list.
+         */
+        function resetDrawView() {
+            updateCount();
+            if (participants.length === 0) {
+                 drawButton.disabled = true;
+                 drawButton.textContent = 'All Winners Drawn';
+            } else {
+                 drawButton.disabled = false;
+                 drawButton.textContent = 'Draw a Winner!';
+            }
+            processingSection.classList.add('hidden');
+            currentWinner = null;
+        }
+
+        /**
+         * Handles the click event for the draw button.
+         */
+        function handleDrawClick() {
+            if (participants.length === 0) {
+                showModal('Draw Complete', 'There are no participants left to draw.');
+                return;
+            }
+
+            processingSection.classList.remove('hidden');
+            drawButton.disabled = true;
+            drawButton.textContent = 'Drawing...';
+
+            if (confettiInstance) confettiInstance.clear();
+
+            currentWinner = participants.pop(); // O(1) draw operation
+
+            setTimeout(() => {
+                processingSection.classList.add('hidden');
+                showWinnerPopup(currentWinner);
+                updateCount();
+            }, 1500);
+        }
+
+        /**
+         * Resets the entire app to the upload screen.
+         */
+        function handleStartOver() {
+            participants = [];
+            fileInput.value = '';
+            fileNameDisplay.textContent = 'No file selected.';
+            uploadSection.classList.remove('hidden');
+            drawSection.classList.add('hidden');
+            if (confettiInstance) confettiInstance.clear();
+        }
+
+        /**
+         * Accessibility event handler for 'Escape' key.
+         */
+        function handleKeydown(e) {
+            if (e.key === 'Escape') {
+                if (!winnerModal.classList.contains('hidden')) {
+                    // Default to MIA if Escape is pressed, as it's the "cancel" action
+                    handleMIA(); 
+                }
+                if (!alertModal.classList.contains('hidden')) {
+                    hideAlertModal();
+                }
+            }
+        };
+
+        /**
+         * Displays the winner modal from the HTML.
+         */
+        function showWinnerPopup(winner) {
+            winnerNameDisplay.textContent = winner;
+            winnerModal.classList.remove('hidden');
+            winnerModal.classList.add('flex');
+            
+            window.addEventListener('keydown', handleKeydown);
+            winnerDoneBtn.focus(); // Focus on the "Done" button by default
+
+            if (confettiInstance) {
+                confettiInstance.render();
+            }
+        }
+
+        // *** NEW: Helper function to close the modal and reset the button ***
+        /**
+         * Helper function to close the winner modal and reset draw button.
+         */
+        function closeWinnerModal() {
+            if (confettiInstance) {
+                 confettiInstance.clear();
+            }
+
+            winnerModal.classList.add('hidden');
+            winnerModal.classList.remove('flex');
+            
+            window.removeEventListener('keydown', handleKeydown);
+
+            if (participants.length === 0) {
+                 drawButton.disabled = true;
+                 drawButton.textContent = 'All Winners Drawn';
+            } else {
+                 drawButton.disabled = false;
+                 drawButton.textContent = 'Draw Another Winner!';
+            }
+            
+            currentWinner = null; // Clear the temporary winner
+        }
+
+
+        // *** MODIFIED: This function now just saves the winner and closes ***
+        /**
+         * Handles closing the winner modal AND saving the winner.
+         */
+        function handleModalDone() {
+            if (currentWinner) {
+                addWinnerToList(currentWinner); // This also saves to localStorage
+            }
+            closeWinnerModal();
+        }
+
+        // *** NEW: Function to handle the MIA click ***
+        /**
+         * Handles the 'MIA' (Missing In Action) button click.
+         * Closes the modal without saving the winner.
+         */
+        function handleMIA() {
+            if (currentWinner) {
+                // Give feedback to the user
+                showModal('Participant Not Saved', 
+                          `${currentWinner} was marked as 'Missing in Action'. They have been removed from the current draw pool but NOT added to the permanent winner list.`);
+            }
+            // We just close the modal. currentWinner is already popped from 'participants'.
+            // We DO NOT call addWinnerToList.
+            closeWinnerModal();
+        }
+
+
+         /**
+         * Adds winner to list AND saves to localStorage.
+         */
+        function addWinnerToList(winner) {
+            if (!winner) return; // Safety check
+
+            // 1. Add to visual list
+            const li = document.createElement('li');
+            li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
+            li.textContent = winner;
+            winnersList.prepend(li);
+            pastWinnersContainer.style.display = 'block';
+
+            // 2. Save to localStorage
+            const savedWinners = getSavedWinners();
+            if (!savedWinners.includes(winner)) {
+                 savedWinners.unshift(winner);
+                 localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinners));
+            }
+        }
+
+        /**
+         * The CSPRNG Function.
+         */
+        function getSecureRandom(max) {
+            const randomBuffer = new Uint32Array(1);
+            window.crypto.getRandomValues(randomBuffer);
+            let randomNumber = randomBuffer[0];
+            return Math.floor((randomNumber / (0xFFFFFFFF + 1)) * max);
+        }
+
+        /**
+         * Fisher-Yates Shuffle function.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = getSecureRandom(i + 1); 
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /**
+         * Updates the participant count display.
+         */
+        function updateCount() {
+            countDisplay.textContent = participants.length;
+        }
+
+        /**
+         * Shows the alert modal from the HTML.
+         */
+        function showModal(title, message) {
+            alertModalTitle.textContent = title;
+            alertModalMessage.textContent = message;
+            
+            alertModal.classList.remove('hidden');
+            alertModal.classList.add('flex');
+            
+            window.addEventListener('keydown', handleKeydown);
+            alertOkBtn.focus();
+        }
+
+        /**
+         * Hides the alert modal.
+         */
+        function hideAlertModal() {
+            alertModal.classList.add('hidden');
+            alertModal.classList.remove('flex');
+            window.removeEventListener('keydown', handleKeydown);
+        }
+
+        /**
+         * Helper to get parsed winners from localStorage.
+         */
+        function getSavedWinners() {
+             const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
+             return winnersJson ? JSON.parse(winnersJson) : [];
+        }
+        
+        /**
+         * Loads and displays winners from localStorage on startup.
+         */
+        function loadSavedWinners() {
+            const savedWinners = getSavedWinners();
+            if (savedWinners.length > 0) {
+                winnersList.innerHTML = ''; // Clear any existing
+                savedWinners.forEach(winner => {
+                    const li = document.createElement('li');
+                    li.className = 'p-2 bg-white rounded shadow-sm text-gray-700';
+                    li.textContent = winner;
+                    winnersList.appendChild(li);
+                });
+                pastWinnersContainer.style.display = 'block';
+            }
+        }
+
+        /**
+         * Clears the winner history from storage and the UI.
+         */
+        function clearWinnerHistory() {
+            if (confirm('Are you sure you want to permanently clear all winner history? This cannot be undone.')) {
+                localStorage.removeItem(WINNERS_STORAGE_KEY);
+                winnersList.innerHTML = '';
+                pastWinnersContainer.style.display = 'none';
+                showModal('History Cleared', 'All past winners have been cleared.');
+            }
+        }
+
+        /**
+         * Creates and downloads a CSV file of all saved winners.
+         */
+        function downloadWinners() {
+            const savedWinners = getSavedWinners();
+
+            if (savedWinners.length === 0) {
+                showModal('No Winners', 'There are no winners in the history to download.');
+                return;
+            }
+
+            // 1. Format as CSV content (string)
+            // The list is already saved in reverse chronological order (newest first).
+            // We'll reverse it back to chronological for the export.
+            let csvContent = "Winners\n"; // CSV Header
+            savedWinners.slice().reverse().forEach(winner => {
+                // Basic CSV escaping: quote the name and double-up any existing quotes
+                const escapedWinner = `"${winner.replace(/"/g, '""')}"`;
+                csvContent += `${escapedWinner}\n`; 
+            });
+
+            // 2. Create the Blob
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+            // 3. Create a temporary download link
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+
+            // 4. Set a dynamic filename with the date
+            const date = new Date();
+            const dateString = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+            link.setAttribute("download", `lucky_draw_winners_${dateString}.csv`);
+            
+            // 5. Trigger download and clean up
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url); // Clean up the temporary URL
+        }
+
+    </script>
+</body>
+</html>
 
