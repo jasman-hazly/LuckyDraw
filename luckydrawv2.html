@@ -35,7 +35,7 @@
                         pop: 'pop 0.4s ease-out forwards', // Apply pop to modal
                         fadeIn: 'fadeIn 0.4s ease-out forwards',
                         fadeInSlow: 'fadeInSlow 0.6s ease-out forwards',
-                        spin: 'spin 1.5s linear infinite',
+                        spin: 'spin 1s linear infinite', // Faster spin for button
                     }
                 },
             },
@@ -58,16 +58,6 @@
         }
         input[type="file"] {
             display: none;
-        }
-         /* Icon for the gear */
-        .icon-gear {
-            display: inline-block;
-            width: 3rem;
-            height: 3rem;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.5c.55 0 1.02.398 1.11.94l.167.992c.32.19.648.406.974.654l.983-.752c.462-.354 1.107-.274 1.488.256l1.35 2.214c.381.528.293 1.25-.205 1.603l-.935.672a11.196 11.196 0 0 1 .16 1.455c.036.35.036.702 0 1.052a11.3 11.3 0 0 1-.362 2.298l.935.672c.5.353.586 1.075.205 1.603l-1.35 2.214c-.381.528-1.026.608-1.488.256l-.983-.752a11.199 11.199 0 0 1-.974.654l-.167.992c-.09.542-.56.94-1.11-.94h-2.5c-.55 0-1.02-.398-1.11-.94l-.167-.992a11.198 11.198 0 0 1-.974-.654l-.983.752c-.462-.354-1.107-.274-1.488-.256l-1.35-2.214c-.381-.528-.293-1.25.205 1.603l.935-.672a11.192 11.192 0 0 1-.16-1.455c-.036-.35-.036-.702 0-1.052a11.3 11.3 0 0 1 .362-2.298l-.935-.672c-.5-.353-.586-1.075-.205-1.603l1.35-2.214c.381.528 1.026.608 1.488.256l.983.752a11.199 11.199 0 0 1 .974-.654l.167-.992ZM12 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" /></svg>');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
         }
         /* Class to hide elements */
         .hidden {
@@ -102,7 +92,21 @@
                 <input type="file" id="csvFile" accept=".csv">
                 <p id="fileName" class="mt-2 text-sm text-gray-600" aria-live="polite">No file selected.</p>
                 <p class="mt-1 text-xs text-gray-500">File should contain one name per line.</p>
+                
+                <!-- *** NEW: Real-time validation message *** -->
+                <p id="uploadStatus" class="mt-4 text-green-700 font-semibold" aria-live="polite"></p>
             </div>
+
+            <!-- *** NEW: Session Recovery Button *** -->
+             <div id="recoverSessionContainer" class="mt-6 text-center hidden">
+                 <p class="text-gray-600">Or</p>
+                <button id="recoverSessionButton"
+                        class="mt-4 rounded-lg bg-yellow-500 px-6 py-3 text-lg font-bold text-white shadow-lg transition-all
+                               hover:bg-yellow-600 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                    Recover previous session?
+                </button>
+            </div>
+            
              <p class="mt-6 text-center text-sm text-gray-500">
                 Uses a Cryptographically Secure RNG & Rejection Sampling.
             </p>
@@ -123,20 +127,18 @@
                             Remaining Participants:
                             <strong id="count" class="text-indigo-600" aria-live="polite">0</strong>
                         </div>
+                        
+                        <!-- *** MODIFIED: Draw button changed for Micro-interaction *** -->
                         <button id="drawButton"
                                 class="mt-4 w-full sm:w-2/3 rounded-lg bg-green-600 px-8 py-4 text-2xl font-bold text-white shadow-lg transition-all duration-200 ease-in-out
                                        hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300
-                                       disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">
-                            Draw a Winner!
+                                       disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none
+                                       flex items-center justify-center min-h-[76px]">
+                            <!-- Content will be set by JS -->
                         </button>
                     </div>
 
-                     <div id="processingSection" class="mt-8 text-center hidden">
-                        <div class="flex flex-col items-center justify-center gap-2 p-6 min-h-[80px] bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
-                            <div class="icon-gear text-indigo-500 animate-spin"></div>
-                            <span class="text-xl text-indigo-700 font-semibold" aria-live="polite">Drawing... Please Wait</span>
-                        </div>
-                    </div>
+                     <!-- *** REMOVED: processingSection is no longer needed *** -->
 
                     <div class="mt-8 text-center">
                         <button id="startOverButton"
@@ -219,15 +221,19 @@
         let confettiInstance;
         let currentWinner = null;
         const WINNERS_STORAGE_KEY = 'luckyDrawWinners';
+        const SESSION_STORAGE_KEY = 'luckyDrawSession'; // *** NEW: For session recovery ***
 
         // --- DOM Elements ---
         const uploadSection = document.getElementById('uploadSection');
         const drawSection = document.getElementById('drawSection');
         const fileInput = document.getElementById('csvFile');
         const fileNameDisplay = document.getElementById('fileName');
+        const uploadStatus = document.getElementById('uploadStatus'); // *** NEW: For validation ***
+        const recoverSessionContainer = document.getElementById('recoverSessionContainer'); // *** NEW: For session ***
+        const recoverSessionButton = document.getElementById('recoverSessionButton'); // *** NEW: For session ***
         const drawButton = document.getElementById('drawButton');
         const countDisplay = document.getElementById('count');
-        const processingSection = document.getElementById('processingSection');
+        // const processingSection = document.getElementById('processingSection'); // *** REMOVED ***
         const pastWinnersContainer = document.getElementById('pastWinnersContainer');
         const winnersList = document.getElementById('winnersList');
         const startOverButton = document.getElementById('startOverButton');
@@ -265,10 +271,12 @@
             confettiInstance = new ConfettiGenerator(confettiSettings);
 
             loadSavedWinners();
+            checkSessionRecovery(); // *** NEW: Check for saved session on load ***
         });
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', handleFileUpload);
+        recoverSessionButton.addEventListener('click', handleRecoverSession); // *** NEW ***
         drawButton.addEventListener('click', handleDrawClick);
         startOverButton.addEventListener('click', handleStartOver);
         clearHistoryButton.addEventListener('click', clearWinnerHistory);
@@ -278,6 +286,35 @@
         downloadWinnersButton.addEventListener('click', downloadWinners);
 
         // --- Functions ---
+
+        // *** NEW: Session Management Functions ***
+        function checkSessionRecovery() {
+            const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+            if (savedSession) {
+                const sessionData = JSON.parse(savedSession);
+                if (sessionData && sessionData.participants && sessionData.participants.length > 0) {
+                    recoverSessionContainer.classList.remove('hidden');
+                    recoverSessionButton.textContent = `Recover previous session? (${sessionData.participants.length} remaining)`;
+                }
+            }
+        }
+
+        function handleRecoverSession() {
+            const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+            if (savedSession) {
+                const sessionData = JSON.parse(savedSession);
+                participants = sessionData.participants;
+                uploadSection.classList.add('hidden');
+                drawSection.classList.remove('hidden');
+                resetDrawView();
+                showModal('Session Restored', `Your previous session with ${participants.length} participants has been restored.`);
+            }
+        }
+
+        function saveSession() {
+            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ participants }));
+        }
+        // *** END: Session Management Functions ***
 
         /**
          * Handles the file upload event.
@@ -289,6 +326,8 @@
                 return;
             }
             fileNameDisplay.textContent = file.name;
+            uploadStatus.textContent = ''; // Clear status on new file
+            
             const reader = new FileReader();
             reader.onload = (e) => {
                 const text = e.target.result;
@@ -299,29 +338,27 @@
                 if (allNames.length > 0) {
                     // Use the winner map for filtering
                     const savedWinnersMap = getSavedWinnersMap();
-                    
-                    // We need a temporary copy of the map to "use up" the winner slots
-                    // This is the correct way to handle duplicate names
                     const tempWinnerCounts = { ...savedWinnersMap };
                     
                     participants = allNames.filter(name => {
                         if (tempWinnerCounts[name] && tempWinnerCounts[name] > 0) {
-                            // This name is in the winner map, and we still have slots to filter
-                            tempWinnerCounts[name]--; // "Use up" one slot
-                            return false; // Filter this person out
+                            tempWinnerCounts[name]--;
+                            return false;
                         }
-                        return true; // This person is eligible
+                        return true;
                     });
                     
+                    // *** NEW: Real-time validation message ***
+                    const eligibleCount = participants.length;
+                    const filteredCount = allNames.length - eligibleCount;
+                    uploadStatus.textContent = `✅ ${eligibleCount} participants loaded. ${filteredCount} past winners were filtered out.`;
+
                     if (allNames.length > 0 && participants.length === 0) {
                          showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
                     }
                     
-                    // *** IMPLEMENTATION OF SUGGESTION #2 ***
-                    // Shuffle the remaining participants.
-                    // This is statistically redundant with "draw from random index"
-                    // but does not harm and adds a "belt-and-suspenders" feel.
                     shuffleArray(participants);
+                    saveSession(); // *** NEW: Auto-save the new session ***
                     
                     uploadSection.classList.add('hidden');
                     drawSection.classList.remove('hidden');
@@ -329,9 +366,13 @@
                 } else {
                     showModal('Error', 'File is empty or could not be read. Please make sure it is a single column of names.');
                     fileNameDisplay.textContent = 'Invalid file.';
+                    uploadStatus.textContent = '❌ Invalid or empty file.';
                 }
             };
-            reader.onerror = () => showModal('Error', 'An error occurred while reading the file.');
+            reader.onerror = () => {
+                showModal('Error', 'An error occurred while reading the file.');
+                uploadStatus.textContent = '❌ Error reading file.';
+            }
             reader.readAsText(file);
         }
 
@@ -340,14 +381,16 @@
          */
         function resetDrawView() {
             updateCount();
+            
+            // *** MODIFIED: Set button content instead of text ***
             if (participants.length === 0) {
+                 drawButton.innerHTML = 'All Winners Drawn';
                  drawButton.disabled = true;
-                 drawButton.textContent = 'All Winners Drawn';
             } else {
+                 drawButton.innerHTML = 'Draw a Winner!';
                  drawButton.disabled = false;
-                 drawButton.textContent = 'Draw a Winner!';
             }
-            processingSection.classList.add('hidden');
+            // processingSection.classList.add('hidden'); // *** REMOVED ***
             currentWinner = null;
         }
 
@@ -360,22 +403,24 @@
                 return;
             }
 
-            processingSection.classList.remove('hidden');
+            // *** MODIFIED: Micro-interaction for button ***
             drawButton.disabled = true;
-            drawButton.textContent = 'Drawing...';
+            drawButton.innerHTML = `<svg class="animate-spin inline-block h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg> Drawing...`;
+            // *** END MODIFICATION ***
 
             if (confettiInstance) confettiInstance.clear();
 
             // "Draw on Click" logic
-            // 1. Get a secure random index from 0 to (participants.length - 1)
             const winnerIndex = getSecureRandom(participants.length); 
-            
-            // 2. Pluck that winner from the array
-            // .splice() removes the item and returns it in an array
             currentWinner = participants.splice(winnerIndex, 1)[0]; 
 
+            saveSession(); // *** NEW: Save session after participant is removed ***
+
             setTimeout(() => {
-                processingSection.classList.add('hidden');
+                // processingSection.classList.add('hidden'); // *** REMOVED ***
                 showWinnerPopup(currentWinner);
                 updateCount();
             }, 1500);
@@ -386,11 +431,15 @@
          */
         function handleStartOver() {
             participants = [];
-            fileInput.value = '';
+            fileInput.value = ''; // Clear file input
             fileNameDisplay.textContent = 'No file selected.';
+            uploadStatus.textContent = ''; // *** NEW: Clear status ***
             uploadSection.classList.remove('hidden');
             drawSection.classList.add('hidden');
             if (confettiInstance) confettiInstance.clear();
+            
+            localStorage.removeItem(SESSION_STORAGE_KEY); // *** NEW: Clear session ***
+            recoverSessionContainer.classList.add('hidden'); // Hide recovery button
         }
 
         /**
@@ -399,7 +448,6 @@
         function handleKeydown(e) {
             if (e.key === 'Escape') {
                 if (!winnerModal.classList.contains('hidden')) {
-                    // Default to MIA if Escape is pressed, as it's the "cancel" action
                     handleMIA(); 
                 }
                 if (!alertModal.classList.contains('hidden')) {
@@ -417,7 +465,7 @@
             winnerModal.classList.add('flex');
             
             window.addEventListener('keydown', handleKeydown);
-            winnerDoneBtn.focus(); // Focus on the "Done" button by default
+            winnerDoneBtn.focus();
 
             if (confettiInstance) {
                 confettiInstance.render();
@@ -437,15 +485,17 @@
             
             window.removeEventListener('keydown', handleKeydown);
 
+            // *** MODIFIED: Set button content ***
             if (participants.length === 0) {
+                 drawButton.innerHTML = 'All Winners Drawn';
                  drawButton.disabled = true;
-                 drawButton.textContent = 'All Winners Drawn';
+                 localStorage.removeItem(SESSION_STORAGE_KEY); // *** NEW: Clear session on finish ***
             } else {
+                 drawButton.innerHTML = 'Draw Another Winner!';
                  drawButton.disabled = false;
-                 drawButton.textContent = 'Draw Another Winner!';
             }
             
-            currentWinner = null; // Clear the temporary winner
+            currentWinner = null;
         }
 
 
@@ -454,23 +504,19 @@
          */
         function handleModalDone() {
             if (currentWinner) {
-                addWinnerToList(currentWinner); // This also saves to localStorage
+                addWinnerToList(currentWinner);
             }
             closeWinnerModal();
         }
 
         /**
          * Handles the 'MIA' (Missing In Action) button click.
-         * Closes the modal without saving the winner.
          */
         function handleMIA() {
             if (currentWinner) {
-                // Give feedback to the user
                 showModal('Participant Not Saved', 
                           `${currentWinner} was marked as 'Missing in Action'. They have been removed from the current draw pool but NOT added to the permanent winner list.`);
             }
-            // We just close the modal. currentWinner is already removed from 'participants'.
-            // We DO NOT call addWinnerToList.
             closeWinnerModal();
         }
 
@@ -479,21 +525,16 @@
          * Adds winner to list AND saves to localStorage.
          */
         function addWinnerToList(winner) {
-            if (!winner) return; // Safety check
+            if (!winner) return;
 
-            // 1. Add to visual list
             const li = document.createElement('li');
             li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
             li.textContent = winner;
-            winnersList.prepend(li); // Prepend to show newest first
+            winnersList.prepend(li);
             pastWinnersContainer.style.display = 'block';
 
-            // 2. Save to localStorage as a map
             const savedWinnersMap = getSavedWinnersMap();
-            
-            // Increment the count for this winner, or set to 1 if new
             savedWinnersMap[winner] = (savedWinnersMap[winner] || 0) + 1;
-            
             localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinnersMap));
         }
 
@@ -513,7 +554,6 @@
         }
 
         /**
-         * *** IMPLEMENTATION OF SUGGESTION #2 ***
          * Fisher-Yates Shuffle function.
          */
         function shuffleArray(array) {
@@ -555,7 +595,6 @@
 
         /**
          * Get parsed winners map from localStorage.
-         * Returns an object like { "name": count }
          */
         function getSavedWinnersMap() {
              const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
@@ -578,12 +617,12 @@
             allWinners.sort(); 
 
             if (allWinners.length > 0) {
-                winnersList.innerHTML = ''; // Clear any existing
+                winnersList.innerHTML = '';
                 allWinners.forEach(winner => {
                     const li = document.createElement('li');
                     li.className = 'p-2 bg-white rounded shadow-sm text-gray-700';
                     li.textContent = winner;
-                    winnersList.appendChild(li); // Use appendChild for sorted list
+                    winnersList.appendChild(li);
                 });
                 pastWinnersContainer.style.display = 'block';
             }
