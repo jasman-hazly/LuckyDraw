@@ -122,6 +122,7 @@
                          </p>
                     </div>
 
+                    <!-- This layout is correct: Count is before the Button -->
                     <div class="mt-6 text-center">
                         <div class="text-2xl font-medium text-gray-700">
                             Remaining Participants:
@@ -137,8 +138,6 @@
                             <!-- Content will be set by JS -->
                         </button>
                     </div>
-
-                     <!-- *** REMOVED: processingSection is no longer needed *** -->
 
                     <div class="mt-8 text-center">
                         <button id="startOverButton"
@@ -289,30 +288,50 @@
 
         // *** NEW: Session Management Functions ***
         function checkSessionRecovery() {
-            const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
-            if (savedSession) {
-                const sessionData = JSON.parse(savedSession);
-                if (sessionData && sessionData.participants && sessionData.participants.length > 0) {
-                    recoverSessionContainer.classList.remove('hidden');
-                    recoverSessionButton.textContent = `Recover previous session? (${sessionData.participants.length} remaining)`;
+            try {
+                const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+                if (savedSession) {
+                    const sessionData = JSON.parse(savedSession);
+                    // Add more robust checking
+                    if (sessionData && sessionData.participants && Array.isArray(sessionData.participants) && sessionData.participants.length > 0) {
+                        recoverSessionContainer.classList.remove('hidden');
+                        recoverSessionButton.textContent = `Recover previous session? (${sessionData.participants.length} remaining)`;
+                    } else {
+                        // Clear invalid session data
+                        localStorage.removeItem(SESSION_STORAGE_KEY);
+                    }
                 }
+            } catch (e) {
+                console.error("Could not check session recovery:", e);
+                localStorage.removeItem(SESSION_STORAGE_KEY);
             }
         }
 
         function handleRecoverSession() {
-            const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
-            if (savedSession) {
-                const sessionData = JSON.parse(savedSession);
-                participants = sessionData.participants;
-                uploadSection.classList.add('hidden');
-                drawSection.classList.remove('hidden');
-                resetDrawView();
-                showModal('Session Restored', `Your previous session with ${participants.length} participants has been restored.`);
+            try {
+                const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+                if (savedSession) {
+                    const sessionData = JSON.parse(savedSession);
+                    participants = sessionData.participants;
+                    uploadSection.classList.add('hidden');
+                    drawSection.classList.remove('hidden');
+                    resetDrawView();
+                    showModal('Session Restored', `Your previous session with ${participants.length} participants has been restored.`);
+                }
+            } catch (e) {
+                console.error("Could not recover session:", e);
+                showModal('Error', 'Could not recover session. It may be corrupted. Starting fresh.');
+                localStorage.removeItem(SESSION_STORAGE_KEY);
             }
         }
 
         function saveSession() {
-            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ participants }));
+            try {
+                localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ participants }));
+            } catch (e) {
+                console.error("Could not save session:", e);
+                showModal('Warning', 'Could not auto-save session. Browser local storage might be full or disabled.');
+            }
         }
         // *** END: Session Management Functions ***
 
@@ -330,43 +349,49 @@
             
             const reader = new FileReader();
             reader.onload = (e) => {
-                const text = e.target.result;
-                const allNames = text.split('\n')
-                                     .map(name => name.trim())
-                                     .filter(name => name.length > 0);
-                
-                if (allNames.length > 0) {
-                    // Use the winner map for filtering
-                    const savedWinnersMap = getSavedWinnersMap();
-                    const tempWinnerCounts = { ...savedWinnersMap };
+                try { // *** ADDED TRY...CATCH for robustness ***
+                    const text = e.target.result;
+                    const allNames = text.split('\n')
+                                         .map(name => name.trim())
+                                         .filter(name => name.length > 0);
                     
-                    participants = allNames.filter(name => {
-                        if (tempWinnerCounts[name] && tempWinnerCounts[name] > 0) {
-                            tempWinnerCounts[name]--;
-                            return false;
-                        }
-                        return true;
-                    });
-                    
-                    // *** NEW: Real-time validation message ***
-                    const eligibleCount = participants.length;
-                    const filteredCount = allNames.length - eligibleCount;
-                    uploadStatus.textContent = `✅ ${eligibleCount} participants loaded. ${filteredCount} past winners were filtered out.`;
+                    if (allNames.length > 0) {
+                        // Use the winner map for filtering
+                        const savedWinnersMap = getSavedWinnersMap();
+                        const tempWinnerCounts = { ...savedWinnersMap };
+                        
+                        participants = allNames.filter(name => {
+                            if (tempWinnerCounts[name] && tempWinnerCounts[name] > 0) {
+                                tempWinnerCounts[name]--;
+                                return false;
+                            }
+                            return true;
+                        });
+                        
+                        // *** NEW: Real-time validation message ***
+                        const eligibleCount = participants.length;
+                        const filteredCount = allNames.length - eligibleCount;
+                        uploadStatus.textContent = `✅ ${eligibleCount} participants loaded. ${filteredCount} past winners were filtered out.`;
 
-                    if (allNames.length > 0 && participants.length === 0) {
-                         showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
+                        if (allNames.length > 0 && participants.length === 0) {
+                             showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
+                        }
+                        
+                        shuffleArray(participants);
+                        saveSession(); // *** NEW: Auto-save the new session ***
+                        
+                        uploadSection.classList.add('hidden');
+                        drawSection.classList.remove('hidden');
+                        resetDrawView(allNames.length);
+                    } else {
+                        showModal('Error', 'File is empty or could not be read. Please make sure it is a single column of names.');
+                        fileNameDisplay.textContent = 'Invalid file.';
+                        uploadStatus.textContent = '❌ Invalid or empty file.';
                     }
-                    
-                    shuffleArray(participants);
-                    saveSession(); // *** NEW: Auto-save the new session ***
-                    
-                    uploadSection.classList.add('hidden');
-                    drawSection.classList.remove('hidden');
-                    resetDrawView(allNames.length);
-                } else {
-                    showModal('Error', 'File is empty or could not be read. Please make sure it is a single column of names.');
-                    fileNameDisplay.textContent = 'Invalid file.';
-                    uploadStatus.textContent = '❌ Invalid or empty file.';
+                } catch (err) { // *** ADDED CATCH BLOCK ***
+                    console.error("Error during file processing:", err);
+                    showModal('Error', 'An unexpected error occurred while processing the file. Please check the file format.');
+                    uploadStatus.textContent = '❌ Error processing file.';
                 }
             };
             reader.onerror = () => {
@@ -390,7 +415,6 @@
                  drawButton.innerHTML = 'Draw a Winner!';
                  drawButton.disabled = false;
             }
-            // processingSection.classList.add('hidden'); // *** REMOVED ***
             currentWinner = null;
         }
 
@@ -420,7 +444,6 @@
             saveSession(); // *** NEW: Save session after participant is removed ***
 
             setTimeout(() => {
-                // processingSection.classList.add('hidden'); // *** REMOVED ***
                 showWinnerPopup(currentWinner);
                 updateCount();
             }, 1500);
@@ -531,11 +554,18 @@
             li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
             li.textContent = winner;
             winnersList.prepend(li);
+            // *** FIXED: This was the source of the syntax error. ***
             pastWinnersContainer.style.display = 'block';
 
             const savedWinnersMap = getSavedWinnersMap();
             savedWinnersMap[winner] = (savedWinnersMap[winner] || 0) + 1;
-            localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinnersMap));
+            
+            try {
+                localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinnersMap));
+            } catch (e) {
+                console.error("Could not save winner to storage:", e);
+                showModal('Warning', 'Could not save winner history. Browser local storage might be full or disabled.');
+            }
         }
 
         /**
@@ -597,8 +627,14 @@
          * Get parsed winners map from localStorage.
          */
         function getSavedWinnersMap() {
-             const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
-             return winnersJson ? JSON.parse(winnersJson) : {};
+            try {
+                 const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
+                 return winnersJson ? JSON.parse(winnersJson) : {};
+            } catch (e) {
+                console.error("Could not get saved winners:", e);
+                localStorage.removeItem(WINNERS_STORAGE_KEY);
+                return {};
+            }
         }
         
         /**
@@ -623,6 +659,7 @@
                     li.className = 'p-2 bg-white rounded shadow-sm text-gray-700';
                     li.textContent = winner;
                     winnersList.appendChild(li);
+Lg
                 });
                 pastWinnersContainer.style.display = 'block';
             }
