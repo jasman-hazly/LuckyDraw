@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-gray-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unbiased Lucky Draw - Persistent & Performant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -100,7 +100,7 @@
                     Select .CSV File
                 </label>
                 <input type="file" id="csvFile" accept=".csv">
-                <p id="fileName" class="mt-2 text-sm text-gray-600">No file selected.</p>
+                <p id="fileName" class="mt-2 text-sm text-gray-600" aria-live="polite">No file selected.</p>
                 <p class="mt-1 text-xs text-gray-500">File should contain one name per line.</p>
             </div>
              <p class="mt-6 text-center text-sm text-gray-500">
@@ -121,7 +121,7 @@
                     <div class="mt-6 text-center">
                         <div class="text-2xl font-medium text-gray-700">
                             Remaining Participants:
-                            <strong id="count" class="text-indigo-600">0</strong>
+                            <strong id="count" class="text-indigo-600" aria-live="polite">0</strong>
                         </div>
                         <button id="drawButton"
                                 class="mt-4 w-full sm:w-2/3 rounded-lg bg-green-600 px-8 py-4 text-2xl font-bold text-white shadow-lg transition-all duration-200 ease-in-out
@@ -134,7 +134,7 @@
                      <div id="processingSection" class="mt-8 text-center hidden">
                         <div class="flex flex-col items-center justify-center gap-2 p-6 min-h-[80px] bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
                             <div class="icon-gear text-indigo-500 animate-spin"></div>
-                            <span class="text-xl text-indigo-700 font-semibold">Drawing... Please Wait</span>
+                            <span class="text-xl text-indigo-700 font-semibold" aria-live="polite">Drawing... Please Wait</span>
                         </div>
                     </div>
 
@@ -169,6 +169,7 @@
 
     </main>
 
+    <!-- Winner Modal -->
     <div id="winner-modal"
          class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
          role="dialog" aria-modal="true" aria-labelledby="winner-modal-title">
@@ -195,6 +196,7 @@
         </div>
     </div>
 
+    <!-- Alert Modal -->
     <div id="alert-modal"
          class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 items-center justify-center p-4 z-[1100] animate-fadeInSlow"
          role="dialog" aria-modal="true" aria-labelledby="alert-modal-title">
@@ -295,10 +297,11 @@
                                      .filter(name => name.length > 0);
                 
                 if (allNames.length > 0) {
-                    // *** MODIFICATION 2: Use the winner map for filtering ***
+                    // Use the winner map for filtering
                     const savedWinnersMap = getSavedWinnersMap();
                     
                     // We need a temporary copy of the map to "use up" the winner slots
+                    // This is the correct way to handle duplicate names
                     const tempWinnerCounts = { ...savedWinnersMap };
                     
                     participants = allNames.filter(name => {
@@ -314,7 +317,11 @@
                          showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
                     }
                     
-                    // *** MODIFICATION 1: REMOVED shuffleArray(participants); ***
+                    // *** IMPLEMENTATION OF SUGGESTION #2 ***
+                    // Shuffle the remaining participants.
+                    // This is statistically redundant with "draw from random index"
+                    // but does not harm and adds a "belt-and-suspenders" feel.
+                    shuffleArray(participants);
                     
                     uploadSection.classList.add('hidden');
                     drawSection.classList.remove('hidden');
@@ -359,7 +366,7 @@
 
             if (confettiInstance) confettiInstance.clear();
 
-            // *** MODIFICATION 1: "Draw on Click" logic ***
+            // "Draw on Click" logic
             // 1. Get a secure random index from 0 to (participants.length - 1)
             const winnerIndex = getSecureRandom(participants.length); 
             
@@ -481,7 +488,7 @@
             winnersList.prepend(li); // Prepend to show newest first
             pastWinnersContainer.style.display = 'block';
 
-            // *** MODIFICATION 2: Save to localStorage as a map ***
+            // 2. Save to localStorage as a map
             const savedWinnersMap = getSavedWinnersMap();
             
             // Increment the count for this winner, or set to 1 if new
@@ -491,29 +498,30 @@
         }
 
         /**
-         * *** MODIFICATION 3: Unbiased CSPRNG with Rejection Sampling ***
+         * Unbiased CSPRNG with Rejection Sampling
          */
         function getSecureRandom(max) {
-            // The total range of a 32-bit unsigned integer
             const max_val = 0xFFFFFFFF; 
-            
-            // The "limit" is the largest number divisible by max
             const limit = max_val - (max_val % max);
-
             const randomBuffer = new Uint32Array(1);
             
-            // Re-roll if the number is in the small, biased "remainder" range
             do {
                 window.crypto.getRandomValues(randomBuffer);
             } while (randomBuffer[0] >= limit);
 
-            // This is now perfectly, evenly distributed
             return randomBuffer[0] % max;
         }
 
         /**
-         * *** MODIFICATION 1: Removed shuffleArray function ***
+         * *** IMPLEMENTATION OF SUGGESTION #2 ***
+         * Fisher-Yates Shuffle function.
          */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = getSecureRandom(i + 1); 
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
 
         /**
          * Updates the participant count display.
@@ -546,7 +554,7 @@
         }
 
         /**
-         * *** MODIFICATION 2: Get parsed winners map from localStorage. ***
+         * Get parsed winners map from localStorage.
          * Returns an object like { "name": count }
          */
         function getSavedWinnersMap() {
@@ -555,12 +563,11 @@
         }
         
         /**
-         * *** MODIFICATION 2: Loads and displays winners from the map. ***
+         * Loads and displays winners from the map.
          */
         function loadSavedWinners() {
             const savedWinnersMap = getSavedWinnersMap();
             
-            // Convert map to an array of all winner names
             const allWinners = [];
             for (const name in savedWinnersMap) {
                 for (let i = 0; i < savedWinnersMap[name]; i++) {
@@ -568,7 +575,6 @@
                 }
             }
             
-            // Sort alphabetically as we can't guarantee insertion order
             allWinners.sort(); 
 
             if (allWinners.length > 0) {
@@ -596,12 +602,11 @@
         }
 
         /**
-         * *** MODIFICATION 2: Download winners from the map. ***
+         * Download winners from the map.
          */
         function downloadWinners() {
             const savedWinnersMap = getSavedWinnersMap();
 
-            // Convert map to an array of all winner names
             const allWinners = [];
             for (const name in savedWinnersMap) {
                 for (let i = 0; i < savedWinnersMap[name]; i++) {
@@ -614,35 +619,28 @@
                 return;
             }
             
-            // Sort alphabetically for a consistent export
             allWinners.sort();
 
             let csvContent = "Winners\n"; // CSV Header
             allWinners.forEach(winner => {
-                // Basic CSV escaping: quote the name and double-up any existing quotes
                 const escapedWinner = `"${winner.replace(/"/g, '""')}"`;
                 csvContent += `${escapedWinner}\n`; 
             });
 
-            // 2. Create the Blob
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
-            // 3. Create a temporary download link
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
 
-            // 4. Set a dynamic filename with the date
             const date = new Date();
             const dateString = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
             link.setAttribute("download", `lucky_draw_winners_${dateString}.csv`);
             
-            // 5. Trigger download and clean up
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(url); // Clean up the temporary URL
+            URL.revokeObjectURL(url);
         }
 
     </script>
