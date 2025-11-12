@@ -23,8 +23,8 @@ How to Use
 2. Upload: Open the index.html (or live GitHub Pages link). Click "Select .CSV File" and choose your list.
 3. The app will confirm how many participants are eligible and how many past winners were filtered out.
 4. Draw: Click the "Draw a Winner!" button. Confirm: A modal will pop up with the winner's name.
-       i.  Click "Done (Award Prize)" to confirm the win and save them to the permanent winner list.
-       ii. Click "MIA (Not Present)" to discard the win.
+      (i)  Click "Done (Award Prize)" to confirm the win and save them to the permanent winner list.
+       (ii). Click "MIA (Not Present)" to discard the win.
 7. Repeat: Continue drawing. The remaining participant count will update automatically.
   
 The "Provable Fairness" Guarantee
