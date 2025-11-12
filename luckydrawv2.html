@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-gray-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>Unbiased Lucky Draw - Persistent & Performant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -104,7 +104,7 @@
                 <p class="mt-1 text-xs text-gray-500">File should contain one name per line.</p>
             </div>
              <p class="mt-6 text-center text-sm text-gray-500">
-                Uses a Cryptographically Secure RNG & the Fisher-Yates Shuffle.
+                Uses a Cryptographically Secure RNG & Rejection Sampling.
             </p>
         </div>
 
@@ -295,14 +295,26 @@
                                      .filter(name => name.length > 0);
                 
                 if (allNames.length > 0) {
-                    const savedWinners = getSavedWinners();
-                    participants = allNames.filter(name => !savedWinners.includes(name));
-
-                    if (participants.length === 0) {
+                    // *** MODIFICATION 2: Use the winner map for filtering ***
+                    const savedWinnersMap = getSavedWinnersMap();
+                    
+                    // We need a temporary copy of the map to "use up" the winner slots
+                    const tempWinnerCounts = { ...savedWinnersMap };
+                    
+                    participants = allNames.filter(name => {
+                        if (tempWinnerCounts[name] && tempWinnerCounts[name] > 0) {
+                            // This name is in the winner map, and we still have slots to filter
+                            tempWinnerCounts[name]--; // "Use up" one slot
+                            return false; // Filter this person out
+                        }
+                        return true; // This person is eligible
+                    });
+                    
+                    if (allNames.length > 0 && participants.length === 0) {
                          showModal('Upload Complete', 'All participants from this list have already won in previous sessions.');
                     }
                     
-                    shuffleArray(participants);
+                    // *** MODIFICATION 1: REMOVED shuffleArray(participants); ***
                     
                     uploadSection.classList.add('hidden');
                     drawSection.classList.remove('hidden');
@@ -347,7 +359,13 @@
 
             if (confettiInstance) confettiInstance.clear();
 
-            currentWinner = participants.pop(); // O(1) draw operation
+            // *** MODIFICATION 1: "Draw on Click" logic ***
+            // 1. Get a secure random index from 0 to (participants.length - 1)
+            const winnerIndex = getSecureRandom(participants.length); 
+            
+            // 2. Pluck that winner from the array
+            // .splice() removes the item and returns it in an array
+            currentWinner = participants.splice(winnerIndex, 1)[0]; 
 
             setTimeout(() => {
                 processingSection.classList.add('hidden');
@@ -444,7 +462,7 @@
                 showModal('Participant Not Saved', 
                           `${currentWinner} was marked as 'Missing in Action'. They have been removed from the current draw pool but NOT added to the permanent winner list.`);
             }
-            // We just close the modal. currentWinner is already popped from 'participants'.
+            // We just close the modal. currentWinner is already removed from 'participants'.
             // We DO NOT call addWinnerToList.
             closeWinnerModal();
         }
@@ -460,36 +478,42 @@
             const li = document.createElement('li');
             li.className = 'p-2 bg-white rounded shadow-sm text-gray-700 animate-fadeIn';
             li.textContent = winner;
-            winnersList.prepend(li);
+            winnersList.prepend(li); // Prepend to show newest first
             pastWinnersContainer.style.display = 'block';
 
-            // 2. Save to localStorage
-            const savedWinners = getSavedWinners();
-            if (!savedWinners.includes(winner)) {
-                 savedWinners.unshift(winner);
-                 localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinners));
-            }
+            // *** MODIFICATION 2: Save to localStorage as a map ***
+            const savedWinnersMap = getSavedWinnersMap();
+            
+            // Increment the count for this winner, or set to 1 if new
+            savedWinnersMap[winner] = (savedWinnersMap[winner] || 0) + 1;
+            
+            localStorage.setItem(WINNERS_STORAGE_KEY, JSON.stringify(savedWinnersMap));
         }
 
         /**
-         * The CSPRNG Function.
+         * *** MODIFICATION 3: Unbiased CSPRNG with Rejection Sampling ***
          */
         function getSecureRandom(max) {
+            // The total range of a 32-bit unsigned integer
+            const max_val = 0xFFFFFFFF; 
+            
+            // The "limit" is the largest number divisible by max
+            const limit = max_val - (max_val % max);
+
             const randomBuffer = new Uint32Array(1);
-            window.crypto.getRandomValues(randomBuffer);
-            let randomNumber = randomBuffer[0];
-            return Math.floor((randomNumber / (0xFFFFFFFF + 1)) * max);
+            
+            // Re-roll if the number is in the small, biased "remainder" range
+            do {
+                window.crypto.getRandomValues(randomBuffer);
+            } while (randomBuffer[0] >= limit);
+
+            // This is now perfectly, evenly distributed
+            return randomBuffer[0] % max;
         }
 
         /**
-         * Fisher-Yates Shuffle function.
+         * *** MODIFICATION 1: Removed shuffleArray function ***
          */
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = getSecureRandom(i + 1); 
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
 
         /**
          * Updates the participant count display.
@@ -522,25 +546,38 @@
         }
 
         /**
-         * Helper to get parsed winners from localStorage.
+         * *** MODIFICATION 2: Get parsed winners map from localStorage. ***
+         * Returns an object like { "name": count }
          */
-        function getSavedWinners() {
+        function getSavedWinnersMap() {
              const winnersJson = localStorage.getItem(WINNERS_STORAGE_KEY);
-             return winnersJson ? JSON.parse(winnersJson) : [];
+             return winnersJson ? JSON.parse(winnersJson) : {};
         }
         
         /**
-         * Loads and displays winners from localStorage on startup.
+         * *** MODIFICATION 2: Loads and displays winners from the map. ***
          */
         function loadSavedWinners() {
-            const savedWinners = getSavedWinners();
-            if (savedWinners.length > 0) {
+            const savedWinnersMap = getSavedWinnersMap();
+            
+            // Convert map to an array of all winner names
+            const allWinners = [];
+            for (const name in savedWinnersMap) {
+                for (let i = 0; i < savedWinnersMap[name]; i++) {
+                    allWinners.push(name);
+                }
+            }
+            
+            // Sort alphabetically as we can't guarantee insertion order
+            allWinners.sort(); 
+
+            if (allWinners.length > 0) {
                 winnersList.innerHTML = ''; // Clear any existing
-                savedWinners.forEach(winner => {
+                allWinners.forEach(winner => {
                     const li = document.createElement('li');
                     li.className = 'p-2 bg-white rounded shadow-sm text-gray-700';
                     li.textContent = winner;
-                    winnersList.appendChild(li);
+                    winnersList.appendChild(li); // Use appendChild for sorted list
                 });
                 pastWinnersContainer.style.display = 'block';
             }
@@ -559,21 +596,29 @@
         }
 
         /**
-         * Creates and downloads a CSV file of all saved winners.
+         * *** MODIFICATION 2: Download winners from the map. ***
          */
         function downloadWinners() {
-            const savedWinners = getSavedWinners();
+            const savedWinnersMap = getSavedWinnersMap();
 
-            if (savedWinners.length === 0) {
+            // Convert map to an array of all winner names
+            const allWinners = [];
+            for (const name in savedWinnersMap) {
+                for (let i = 0; i < savedWinnersMap[name]; i++) {
+                    allWinners.push(name);
+                }
+            }
+
+            if (allWinners.length === 0) {
                 showModal('No Winners', 'There are no winners in the history to download.');
                 return;
             }
+            
+            // Sort alphabetically for a consistent export
+            allWinners.sort();
 
-            // 1. Format as CSV content (string)
-            // The list is already saved in reverse chronological order (newest first).
-            // We'll reverse it back to chronological for the export.
             let csvContent = "Winners\n"; // CSV Header
-            savedWinners.slice().reverse().forEach(winner => {
+            allWinners.forEach(winner => {
                 // Basic CSV escaping: quote the name and double-up any existing quotes
                 const escapedWinner = `"${winner.replace(/"/g, '""')}"`;
                 csvContent += `${escapedWinner}\n`; 
