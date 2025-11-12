@@ -10,13 +10,13 @@ The Problem
 3. It's a high-integrity application built to be provably fair.
 
 Core Features: 
-🔒 Provably Fair: Uses a cryptographically secure random number generator (CSPRNG), not the standard, predictable Math.random().
-💾 Persistent Winner List: Automatically saves a permanent history of confirmed winners to your browser's localStorage.
-👥 Smart Filtering: Intelligently filters out past winners from new lists. It even fairly handles duplicate names!
-🔄 Session Recovery: Automatically saves your current draw session. If your browser crashes, you can recover your session and resume where you left off.
-👀 "MIA" (Missing In Action) Handling: Mark a winner as "MIA" to remove them from the current draw but not the permanent winner list, giving them a chance to win in the future.
-📥 Data Portability: Download the complete history of past winners as a .csv file for your records.
-🕵️ 100% Private & Client-Side: Everything runs in your browser. No participant data is ever sent to a server.
+1. 🔒 Provably Fair: Uses a cryptographically secure random number generator (CSPRNG), not the standard, predictable Math.random().
+2. 💾 Persistent Winner List: Automatically saves a permanent history of confirmed winners to your browser's localStorage.
+3. 👥 Smart Filtering: Intelligently filters out past winners from new lists. It even fairly handles duplicate names!
+4. 🔄 Session Recovery: Automatically saves your current draw session. If your browser crashes, you can recover your session and resume where you left off.
+5. 👀 "MIA" (Missing In Action) Handling: Mark a winner as "MIA" to remove them from the current draw but not the permanent winner list, giving them a chance to win in the future.
+6. 📥 Data Portability: Download the complete history of past winners as a .csv file for your records.
+7. 🕵️ 100% Private & Client-Side: Everything runs in your browser. No participant data is ever sent to a server.
 
 How to Use
 1. Prepare Your List: Create a .csv file with one participant name per line.
